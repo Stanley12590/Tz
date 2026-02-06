@@ -899,7 +899,7 @@
 
     <!-- Floating Icons -->
     <div class="floating-icons">
-        <a href="https://wa.me/255xxxxxxxxx" class="floating-icon whatsapp-icon" target="_blank" id="whatsappIcon">
+        <a href="https://wa.me/255000000000" class="floating-icon whatsapp-icon" target="_blank" id="whatsappIcon">
             <i class="fab fa-whatsapp"></i>
         </a>
         <a href="https://whatsapp.com/channel/0029Vb72cVkJ3jv10gzqTn18" class="floating-icon channel-icon" target="_blank" id="channelIcon">
@@ -1044,7 +1044,7 @@
                 <div class="prediction-content">
                     <div class="prediction-title">
                         <i class="fas fa-brain"></i> SERVER ANALYSIS 
-                        <span class="recommendation-badge" style="background: linear-gradient(45deg, var(--neon-yellow), var(--neon-green)); color: #000; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem;">🔴 LIVE</span>
+                        <span style="background: linear-gradient(45deg, var(--neon-yellow), var(--neon-green)); color: #000; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem;">🔴 LIVE</span>
                     </div>
                     <div class="prediction-text" id="predictionDisplay">
                         SELECT BOMB COUNT AND START<br>
@@ -1172,14 +1172,14 @@
                 
                 if (userDoc.exists) {
                     const userData = userDoc.data();
-                    userStatus = userData.status;
-                    premiumExpiry = userData.expiryDate;
+                    userStatus = userData.status || 'free';
+                    premiumExpiry = userData.expiryDate || null;
                     
                     if (userStatus === 'premium') {
                         const now = new Date();
-                        const expiry = new Date(premiumExpiry);
+                        const expiry = userData.expiryDate ? userData.expiryDate.toDate() : null;
                         
-                        if (now > expiry) {
+                        if (expiry && now > expiry) {
                             // Premium expired
                             userStatus = 'free';
                             await db.collection('users').doc(deviceId).update({
@@ -1188,27 +1188,35 @@
                             });
                         } else {
                             updateUIForPremium();
-                            showNotification('Premium account active', 'success');
                         }
                     }
+                } else {
+                    // Create new user
+                    await db.collection('users').doc(deviceId).set({
+                        deviceId: deviceId,
+                        status: 'free',
+                        createdAt: new Date(),
+                        lastActive: new Date(),
+                        usageCount: 0
+                    });
                 }
 
                 // Check free trial usage
                 const freeTrialDoc = await db.collection('freeTrials').doc(deviceId).get();
                 if (freeTrialDoc.exists) {
                     const trialData = freeTrialDoc.data();
-                    const lastUsed = trialData.lastUsed.toDate();
+                    const lastUsed = trialData.lastUsed ? trialData.lastUsed.toDate() : new Date();
                     const now = new Date();
                     const hoursDiff = (now - lastUsed) / (1000 * 60 * 60);
                     
                     if (hoursDiff < 24) {
-                        freeTriesLeft = trialData.triesLeft;
+                        freeTriesLeft = trialData.triesLeft || 2;
                     } else {
                         // Reset after 24 hours
                         freeTriesLeft = 2;
                         await db.collection('freeTrials').doc(deviceId).set({
                             triesLeft: 2,
-                            lastUsed: now
+                            lastUsed: new Date()
                         });
                     }
                 } else {
@@ -1232,15 +1240,18 @@
             if (userStatus === 'premium') {
                 userStatusBadge.textContent = 'PREMIUM USER';
                 userStatusBadge.className = 'status-badge status-premium';
+                playerName.textContent = 'PREMIUM User';
             } else {
                 userStatusBadge.textContent = `FREE TRIAL (${freeTriesLeft} left)`;
                 userStatusBadge.className = 'status-badge status-free';
+                playerName.textContent = 'VIP User';
             }
         }
 
         function updateUIForPremium() {
-            // Update icons or UI elements for premium users
             playerName.textContent = 'PREMIUM User';
+            document.getElementById('userStatus').textContent = 'PREMIUM USER';
+            document.getElementById('userStatus').className = 'status-badge status-premium';
         }
 
         // ==================== PAGE NAVIGATION ====================
@@ -1365,7 +1376,8 @@
 
                 // Update user status
                 const expiryDate = new Date();
-                expiryDate.setDate(expiryDate.getDate() + codeData.duration); // Add duration days
+                const duration = codeData.duration || 7;
+                expiryDate.setDate(expiryDate.getDate() + duration);
 
                 await db.collection('users').doc(deviceId).set({
                     status: 'premium',
@@ -1389,7 +1401,6 @@
                 console.error('Error validating code:', error);
                 document.getElementById('codeMessage').innerHTML = 
                     '<div class="error-text">Error validating code</div>';
-            } finally {
                 hideLoading();
             }
         }
@@ -1484,7 +1495,7 @@
             const phone = document.getElementById('paymentPhone').value.trim();
             if (!phone || !phone.match(/^0[67]\d{8}$/)) {
                 document.getElementById('paymentMessage').innerHTML = 
-                    '<div class="error-text">Please enter a valid phone number</div>';
+                    '<div class="error-text">Please enter a valid phone number (07 or 06)</div>';
                 return;
             }
 
@@ -1514,6 +1525,17 @@
                     document.getElementById('paymentMessage').innerHTML = 
                         '<div class="success-text">USSD push sent to your phone</div>';
                     
+                    // Save payment record
+                    await db.collection('payments').doc(result.order_id).set({
+                        orderId: result.order_id,
+                        phone: phone,
+                        amount: amount,
+                        status: 'pending',
+                        createdAt: new Date(),
+                        deviceId: deviceId,
+                        duration: duration
+                    });
+
                     // Start polling for payment status
                     pollPaymentStatus(result.order_id, duration);
                 } else {
@@ -1550,6 +1572,15 @@
                         // Payment completed successfully
                         await activatePremium(duration);
                         showNotification('Payment successful! Premium activated.', 'success');
+                        
+                        // Update payment record
+                        await db.collection('payments').doc(orderId).update({
+                            status: 'completed',
+                            completedAt: new Date(),
+                            netAmount: result.payment.net_amount,
+                            fee: result.payment.fee_amount
+                        });
+                        
                         hideLoading();
                         showPage('predictor');
                         return;
@@ -1581,7 +1612,7 @@
 
         async function activatePremium(duration) {
             // Generate premium code
-            const premiumCode = 'PREMIUM_' + Math.random().toString(36).substr(2, 8).toUpperCase();
+            const premiumCode = 'PAY_' + Math.random().toString(36).substr(2, 8).toUpperCase();
             
             // Set expiry date
             const expiryDate = new Date();
@@ -1722,6 +1753,9 @@
             // Update grid with animation
             await animateGridReveal();
             hideLoading();
+            
+            // Update user usage count
+            await updateUsageCount();
         }
 
         function resetGame() {
@@ -1860,6 +1894,23 @@
             document.getElementById('predictionDisplay').innerHTML = message;
         }
 
+        async function updateUsageCount() {
+            try {
+                const userRef = db.collection('users').doc(deviceId);
+                const userDoc = await userRef.get();
+                
+                if (userDoc.exists) {
+                    const currentCount = userDoc.data().usageCount || 0;
+                    await userRef.update({
+                        usageCount: currentCount + 1,
+                        lastActive: new Date()
+                    });
+                }
+            } catch (error) {
+                console.error('Error updating usage count:', error);
+            }
+        }
+
         // ==================== UTILITY FUNCTIONS ====================
         function showLoading(text) {
             if (text) loadingText.textContent = text;
@@ -1905,7 +1956,7 @@
 
         async function loadAdminSettings() {
             try {
-                const settingsDoc = await db.collection('settings').doc('admin').get();
+                const settingsDoc = await db.collection('settings').doc('app').get();
                 if (settingsDoc.exists) {
                     const settings = settingsDoc.data();
                     
