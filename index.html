@@ -2,62 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Stany Mines - Premium Predictor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mines Predictor - Premium Access</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ========== IPHONE SAFARI FIXES ========== */
+        /* === IPHONE WEBVIEW FIX === */
         * {
+            margin: 0;
+            padding: 0;
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
             box-sizing: border-box;
         }
         
         html, body {
-            margin: 0;
-            padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: #000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
             color: white;
         }
         
-        /* Fix for iPhone notch */
-        @supports(padding: max(0px)) {
-            body {
-                padding-top: env(safe-area-inset-top);
-                padding-bottom: env(safe-area-inset-bottom);
-                padding-left: env(safe-area-inset-left);
-                padding-right: env(safe-area-inset-right);
-            }
-        }
-        
-        /* Hide scrollbars but allow scrolling */
+        /* Hide scrollbar but allow scrolling */
         ::-webkit-scrollbar {
             display: none;
         }
         
-        /* ========== APP CONTAINER ========== */
-        .app-container {
-            width: 100%;
-            height: 100vh;
-            height: -webkit-fill-available;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        
-        /* ========== LOADING SCREEN ========== */
+        /* === LOADING SCREEN === */
         #loadingScreen {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, #0a0e17 0%, #1a1f2e 100%);
+            background: #0a0a0a;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -65,30 +44,31 @@
             z-index: 10000;
         }
         
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(0, 247, 255, 0.3);
-            border-top-color: #00f7ff;
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #333;
+            border-top-color: #00ff9d;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 20px;
         }
         
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
         
-        /* ========== PREMIUM WALL (FIRST SCREEN) ========== */
+        /* === PREMIUM WALL (First Screen) === */
         #premiumWall {
-            width: 100%;
-            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #0a0e17 0%, #141a28 100%);
+            z-index: 9999;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            background: linear-gradient(135deg, #0a0e17 0%, #1a1f2e 100%);
             padding: 20px;
-            display: flex;
-            flex-direction: column;
+            display: none;
         }
         
         .premium-header {
@@ -97,58 +77,61 @@
             margin-bottom: 20px;
         }
         
-        .logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #00f7ff, #ff00ff);
-            border-radius: 20px;
-            margin: 0 auto 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            font-weight: bold;
-        }
-        
-        .logo-text {
+        .app-title {
             font-size: 28px;
             font-weight: 800;
             background: linear-gradient(45deg, #00f7ff, #ff00ff);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
         
-        .tagline {
+        .app-subtitle {
             color: #8a9bbd;
             font-size: 14px;
-            margin-top: 5px;
         }
         
-        /* ========== OPTIONS CARDS ========== */
-        .options-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .option-card {
+        /* Cards */
+        .card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
             padding: 20px;
-            border: 1px solid rgba(0, 247, 255, 0.1);
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             position: relative;
-            transition: transform 0.3s;
         }
         
-        .option-card:active {
-            transform: scale(0.98);
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: #00ff9d;
+            font-size: 18px;
+            font-weight: 600;
         }
         
-        .option-badge {
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(0, 255, 157, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00ff9d;
+        }
+        
+        .card-content {
+            color: #b0b8d0;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        /* Free Trial Badge */
+        .free-badge {
             position: absolute;
             top: -10px;
             right: 20px;
@@ -160,170 +143,14 @@
             font-weight: 600;
         }
         
-        .option-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        
-        .option-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-        
-        .free-icon { background: rgba(102, 126, 234, 0.2); color: #667eea; }
-        .premium-icon { background: rgba(0, 255, 157, 0.2); color: #00ff9d; }
-        .code-icon { background: rgba(255, 204, 0, 0.2); color: #ffcc00; }
-        .reseller-icon { background: rgba(255, 0, 85, 0.2); color: #ff0055; }
-        
-        .option-description {
-            color: #8a9bbd;
-            font-size: 14px;
-            margin: 10px 0;
-            line-height: 1.4;
-        }
-        
-        .option-button {
-            width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: all 0.3s;
-        }
-        
-        .free-btn {
-            background: #667eea;
-            color: white;
-        }
-        
-        .premium-btn {
-            background: linear-gradient(135deg, #00ff9d, #00a86b);
-            color: black;
-        }
-        
-        .code-btn {
-            background: linear-gradient(135deg, #ffcc00, #ff9900);
-            color: black;
-        }
-        
-        .reseller-btn {
-            background: linear-gradient(135deg, #ff0055, #cc0044);
-            color: white;
-        }
-        
-        /* ========== MODALS ========== */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 10001;
-            padding: 20px;
-        }
-        
-        .modal-content {
-            background: linear-gradient(135deg, #1a1f2e 0%, #0a0e17 100%);
-            border-radius: 20px;
-            width: 100%;
-            max-width: 400px;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid rgba(0, 247, 255, 0.2);
-            padding: 25px;
-        }
-        
-        .modal-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .modal-header h2 {
-            margin: 0;
-            color: #00f7ff;
-            font-size: 24px;
-        }
-        
-        .modal-body {
-            margin: 20px 0;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            color: #8a9bbd;
-            font-size: 14px;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(0, 247, 255, 0.3);
-            border-radius: 10px;
-            color: white;
-            font-size: 16px;
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: #00f7ff;
-        }
-        
-        .modal-footer {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .modal-btn {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        .btn-primary {
-            background: #00f7ff;
-            color: black;
-        }
-        
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-        
-        /* ========== FREE TRIAL TIMER ========== */
-        .timer-display {
+        /* Timer */
+        .timer {
             background: rgba(255, 0, 85, 0.1);
             border: 1px solid #ff0055;
             border-radius: 10px;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
-            margin-top: 15px;
+            margin: 15px 0;
             display: none;
         }
         
@@ -333,58 +160,203 @@
             font-size: 14px;
         }
         
-        /* ========== GAME CONTAINER ========== */
-        #gameContainer {
+        /* Buttons */
+        .btn {
             width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: transform 0.2s;
         }
         
-        .game-header {
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-free {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-premium {
+            background: linear-gradient(135deg, #00ff9d, #00a86b);
+            color: black;
+        }
+        
+        .btn-code {
+            background: linear-gradient(135deg, #ffcc00, #ff9900);
+            color: black;
+        }
+        
+        .btn-reseller {
+            background: linear-gradient(135deg, #ff0055, #cc0044);
+            color: white;
+        }
+        
+        /* Price Display */
+        .price-display {
+            background: rgba(255, 204, 0, 0.1);
+            border-radius: 10px;
             padding: 15px;
-            background: rgba(10, 14, 23, 0.9);
-            border-bottom: 1px solid rgba(0, 247, 255, 0.2);
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .price-amount {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ffcc00;
+        }
+        
+        .price-label {
+            color: #8a9bbd;
+            font-size: 12px;
+        }
+        
+        /* Inputs */
+        .input-group {
+            margin: 15px 0;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #00f7ff;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+        
+        .input-field::placeholder {
+            letter-spacing: normal;
+            font-weight: normal;
+        }
+        
+        /* Reseller Codes List */
+        .codes-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .code-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(0, 247, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 247, 255, 0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
-        .game-title {
-            font-size: 20px;
-            font-weight: 700;
+        .code-text {
+            font-family: monospace;
+            font-weight: 600;
             color: #00f7ff;
         }
         
-        .user-status {
-            background: rgba(0, 255, 157, 0.1);
-            color: #00ff9d;
-            padding: 5px 10px;
-            border-radius: 20px;
+        .code-status {
             font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 10px;
             font-weight: 600;
         }
         
-        .game-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
+        .status-active {
+            background: rgba(0, 255, 157, 0.2);
+            color: #00ff9d;
         }
         
-        /* ========== FLOATING ICONS ========== */
+        .status-used {
+            background: rgba(255, 0, 85, 0.2);
+            color: #ff0055;
+        }
+        
+        /* Copy Button */
+        .copy-btn {
+            background: #00f7ff;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        /* User Info */
+        .user-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #8a9bbd;
+        }
+        
+        /* Messages */
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            display: none;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .message-success {
+            background: rgba(0, 255, 157, 0.1);
+            border: 1px solid #00ff9d;
+            color: #00ff9d;
+        }
+        
+        .message-error {
+            background: rgba(255, 0, 85, 0.1);
+            border: 1px solid #ff0055;
+            color: #ff0055;
+        }
+        
+        /* Game Container (Your Existing Game) */
+        #gameContainer {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        /* Floating WhatsApp Icons */
         .floating-icons {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 9999;
+            z-index: 9998;
             display: none;
             flex-direction: column;
             gap: 15px;
         }
         
-        .floating-btn {
-            width: 60px;
-            height: 60px;
+        .floating-icon {
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             background: linear-gradient(135deg, #25D366, #128C7E);
             display: flex;
@@ -393,48 +365,41 @@
             color: white;
             font-size: 24px;
             text-decoration: none;
-            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
-            transition: transform 0.3s;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+            transition: transform 0.2s;
         }
         
-        .floating-btn:active {
+        .floating-icon:active {
             transform: scale(0.9);
         }
         
-        .channel-btn {
+        .channel-icon {
             background: linear-gradient(135deg, #667eea, #764ba2);
         }
         
-        /* ========== RESPONSIVE FIXES ========== */
+        /* Responsive Fixes */
         @media (max-width: 768px) {
             #premiumWall {
                 padding: 15px;
             }
             
-            .logo {
-                width: 70px;
-                height: 70px;
-                font-size: 26px;
-            }
-            
-            .logo-text {
+            .app-title {
                 font-size: 24px;
             }
             
-            .option-card {
+            .card {
                 padding: 15px;
             }
             
-            .modal-content {
-                padding: 20px;
+            .floating-icons {
+                bottom: 15px;
+                right: 15px;
             }
-        }
-        
-        /* iPhone X/XS/11 Pro notch support */
-        @supports (padding-top: env(safe-area-inset-top)) {
-            #premiumWall {
-                padding-top: calc(env(safe-area-inset-top) + 20px);
-                padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+            
+            .floating-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
             }
         }
     </style>
@@ -442,317 +407,162 @@
 <body>
     <!-- Loading Screen -->
     <div id="loadingScreen">
-        <div class="spinner"></div>
-        <div style="color: #00f7ff; margin-top: 15px; font-size: 16px;">Loading Stany Mines...</div>
+        <div class="loader"></div>
+        <div style="color: #00f7ff; margin-top: 15px; font-weight: 600;">Loading Mines Predictor...</div>
     </div>
-
+    
     <!-- Premium Wall (First Screen) -->
-    <div id="premiumWall" style="display: none;">
+    <div id="premiumWall">
         <div class="premium-header">
-            <div class="logo">💎</div>
-            <div class="logo-text">STANY MINES</div>
-            <div class="tagline">Premium Mines Predictor with 95%+ Accuracy</div>
+            <div class="app-title">STANY MINES PREDICTOR</div>
+            <div class="app-subtitle">Premium Access Required</div>
         </div>
         
         <!-- Status Messages -->
-        <div id="statusMessage" style="
-            background: rgba(0, 255, 157, 0.1);
-            border: 1px solid #00ff9d;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            color: #00ff9d;
-            text-align: center;
-            display: none;
-        "></div>
+        <div id="messageBox" class="message"></div>
         
-        <div class="options-container">
-            <!-- FREE TRIAL OPTION -->
-            <div class="option-card">
-                <div class="option-badge">FREE</div>
-                <div class="option-title">
-                    <div class="option-icon free-icon">🎁</div>
-                    <div>FREE TRIAL</div>
+        <!-- Free Trial Card -->
+        <div class="card">
+            <div class="free-badge">FREE TRIAL</div>
+            <div class="card-title">
+                <div class="card-icon">
+                    <i class="fas fa-gift"></i>
                 </div>
-                <div class="option-description">
-                    Get 1 FREE prediction every 24 hours. No payment required!
-                    Perfect for testing our system.
+                <div>FREE PREDICTION</div>
+            </div>
+            <div class="card-content">
+                Get 1 FREE prediction every 24 hours. Perfect for testing our system's accuracy.
+            </div>
+            <div id="freeTimer" class="timer">
+                <div class="timer-text">Next free prediction in: <span id="countdown">24:00:00</span></div>
+            </div>
+            <button class="btn btn-free" onclick="useFreeTrial()" id="freeTrialBtn">
+                <i class="fas fa-play-circle"></i> USE FREE PREDICTION
+            </button>
+        </div>
+        
+        <!-- Premium Purchase Card -->
+        <div class="card">
+            <div class="card-title">
+                <div class="card-icon">
+                    <i class="fas fa-crown"></i>
                 </div>
-                <div class="timer-display" id="freeTrialTimer">
-                    <div class="timer-text">
-                        Next free prediction in: <span id="countdown">24:00:00</span>
-                    </div>
+                <div>BUY PREMIUM ACCESS</div>
+            </div>
+            <div class="card-content">
+                Unlimited predictions • 95%+ accuracy • 24/7 live signals • Premium support
+            </div>
+            <div class="price-display">
+                <div class="price-amount">TZS 3,000</div>
+                <div class="price-label">One-time payment • 30 days access</div>
+            </div>
+            <div class="input-group">
+                <input type="tel" id="paymentPhone" class="input-field" placeholder="0712345678" maxlength="10">
+            </div>
+            <button class="btn btn-premium" onclick="processPayment()">
+                <i class="fas fa-lock"></i> BUY NOW WITH HARAKAPAY
+            </button>
+        </div>
+        
+        <!-- Premium Code Card -->
+        <div class="card">
+            <div class="card-title">
+                <div class="card-icon">
+                    <i class="fas fa-key"></i>
                 </div>
-                <button class="option-button free-btn" onclick="useFreeTrial()" id="freeTrialBtn">
-                    USE FREE PREDICTION
-                </button>
+                <div>ENTER PREMIUM CODE</div>
+            </div>
+            <div class="card-content">
+                Already have a premium code? Enter it below to activate your premium access.
+            </div>
+            <div class="input-group">
+                <input type="text" id="premiumCode" class="input-field" placeholder="ENTER CODE" maxlength="20">
+            </div>
+            <button class="btn btn-code" onclick="activatePremiumCode()">
+                <i class="fas fa-check-circle"></i> ACTIVATE CODE
+            </button>
+        </div>
+        
+        <!-- Reseller Card -->
+        <div class="card">
+            <div class="card-title">
+                <div class="card-icon">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div>RESELLER ACCESS</div>
+            </div>
+            <div class="card-content">
+                For resellers with bulk codes. Enter your reseller code to access your codes.
+            </div>
+            <div class="input-group">
+                <input type="text" id="resellerCode" class="input-field" placeholder="ENTER RESELLER CODE" maxlength="20">
+            </div>
+            <button class="btn btn-reseller" onclick="loginReseller()">
+                <i class="fas fa-sign-in-alt"></i> ACCESS RESELLER CODES
+            </button>
+            
+            <!-- Reseller Codes List -->
+            <div id="resellerCodes" class="codes-container">
+                <!-- Codes will appear here -->
             </div>
             
-            <!-- PREMIUM PURCHASE -->
-            <div class="option-card">
-                <div class="option-title">
-                    <div class="option-icon premium-icon">⭐</div>
-                    <div>PREMIUM ACCESS</div>
-                </div>
-                <div class="option-description">
-                    Unlimited predictions • 24/7 Live signals • High accuracy
-                    Premium support • 30 days access
-                </div>
-                <div style="
-                    background: rgba(255, 204, 0, 0.1);
-                    border-radius: 10px;
-                    padding: 12px;
-                    margin: 15px 0;
-                    text-align: center;
-                ">
-                    <span style="color: #ffcc00; font-size: 24px; font-weight: 700;">TZS 3,000</span>
-                    <div style="color: #8a9bbd; font-size: 12px; margin-top: 5px;">One-time payment</div>
-                </div>
-                <button class="option-button premium-btn" onclick="showPaymentModal()">
-                    BUY PREMIUM NOW
-                </button>
-            </div>
-            
-            <!-- ENTER CODE -->
-            <div class="option-card">
-                <div class="option-title">
-                    <div class="option-icon code-icon">🔑</div>
-                    <div>ENTER PREMIUM CODE</div>
-                </div>
-                <div class="option-description">
-                    Already have a premium code? Enter it below to activate
-                    your premium access immediately.
-                </div>
-                <button class="option-button code-btn" onclick="showCodeModal()">
-                    ENTER CODE
-                </button>
-            </div>
-            
-            <!-- RESELLER -->
-            <div class="option-card">
-                <div class="option-title">
-                    <div class="option-icon reseller-icon">👑</div>
-                    <div>RESELLER ACCESS</div>
-                </div>
-                <div class="option-description">
-                    For resellers with bulk codes. Enter your reseller code
-                    to access your codes dashboard.
-                </div>
-                <button class="option-button reseller-btn" onclick="showResellerModal()">
-                    RESELLER LOGIN
-                </button>
-            </div>
+            <button class="copy-btn" onclick="copyAllCodes()" id="copyAllBtn" style="display: none;">
+                <i class="fas fa-copy"></i> COPY ALL CODES
+            </button>
         </div>
         
         <!-- User Info -->
-        <div style="
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: auto;
-            text-align: center;
-            font-size: 12px;
-            color: #8a9bbd;
-        ">
-            <div>User ID: <span id="userIdDisplay">Loading...</span></div>
-            <div>Status: <span id="userStatusText" style="color: #ffcc00;">Checking...</span></div>
+        <div class="user-info">
+            <div>User ID: <span id="userId">Loading...</span></div>
+            <div>Device: <span id="deviceId">Loading...</span></div>
+            <div>Status: <span id="userStatus" style="color: #ffcc00;">Checking...</span></div>
         </div>
     </div>
-
-    <!-- Game Container (Hidden Initially) -->
-    <div id="gameContainer">
-        <div class="game-header">
-            <div class="game-title">🎮 MINES PREDICTOR</div>
-            <div class="user-status" id="gameStatus">PREMIUM</div>
-        </div>
-        <div class="game-content">
-            <!-- Your existing game content here -->
-            <div style="text-align: center; padding: 40px 20px;">
-                <div style="font-size: 24px; font-weight: 700; color: #00f7ff; margin-bottom: 20px;">
-                    🎉 WELCOME TO PREMIUM!
-                </div>
-                <div style="color: #8a9bbd; margin-bottom: 30px;">
-                    Your premium access is active. Start predicting now!
-                </div>
-                <div style="
-                    background: rgba(0, 247, 255, 0.1);
-                    border: 1px solid #00f7ff;
-                    border-radius: 15px;
-                    padding: 20px;
-                    margin: 20px auto;
-                    max-width: 300px;
-                ">
-                    <div style="color: #00ff9d; font-weight: 600; margin-bottom: 10px;">
-                        Premium Expires:
-                    </div>
-                    <div style="font-size: 18px; font-weight: 700; color: white;" id="premiumExpiry">
-                        Loading...
-                    </div>
-                </div>
-                <button onclick="resetApp()" style="
-                    background: #ff0055;
-                    color: white;
-                    border: none;
-                    padding: 15px 30px;
-                    border-radius: 10px;
-                    font-size: 16px;
-                    font-weight: 600;
-                    margin-top: 20px;
-                    cursor: pointer;
-                ">
-                    BACK TO MAIN MENU
-                </button>
-            </div>
+    
+    <!-- Game Container (Your Existing Game) -->
+    <div id="gameContainer" style="display: none;">
+        <!-- YOUR EXISTING GAME CODE GOES HERE -->
+        <!-- DO NOT CHANGE ANYTHING IN THIS SECTION -->
+        <!-- COPY YOUR ORIGINAL GAME HTML CODE HERE -->
+        
+        <!-- Example: Just showing text, replace with your actual game -->
+        <div style="padding: 20px; text-align: center;">
+            <h1 style="color: #00ff9d;">🎮 MINES PREDICTOR</h1>
+            <p style="color: #8a9bbd;">Premium access active! Game loaded successfully.</p>
+            <button onclick="logout()" style="
+                background: #ff0055;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 10px;
+                margin-top: 20px;
+                font-weight: 600;
+                cursor: pointer;
+            ">
+                <i class="fas fa-sign-out-alt"></i> LOGOUT
+            </button>
         </div>
     </div>
-
-    <!-- Floating WhatsApp Icons -->
+    
+    <!-- Floating Icons -->
     <div class="floating-icons" id="floatingIcons">
-        <a href="#" id="whatsappBtn" target="_blank" class="floating-btn">
-            <span style="font-size: 28px;">💬</span>
+        <a href="#" id="whatsappLink" target="_blank" class="floating-icon">
+            <i class="fab fa-whatsapp"></i>
         </a>
-        <a href="https://whatsapp.com/channel/0029Vb72cVkJ3jv10gzqTn18" target="_blank" class="floating-btn channel-btn">
-            <span style="font-size: 24px;">📢</span>
+        <a href="https://whatsapp.com/channel/0029Vb72cVkJ3jv10gzqTn18" target="_blank" class="floating-icon channel-icon">
+            <i class="fas fa-broadcast-tower"></i>
         </a>
     </div>
-
-    <!-- Payment Modal -->
-    <div id="paymentModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>💰 BUY PREMIUM</h2>
-                <div style="color: #8a9bbd; font-size: 14px; margin-top: 5px;">
-                    Enter your phone number for payment
-                </div>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <div class="form-label">Phone Number</div>
-                    <input type="tel" id="paymentPhone" class="form-input" 
-                           placeholder="0712345678" maxlength="10" pattern="[0-9]{10}">
-                </div>
-                <div style="
-                    background: rgba(0, 255, 157, 0.1);
-                    border: 1px solid #00ff9d;
-                    border-radius: 10px;
-                    padding: 15px;
-                    margin: 20px 0;
-                    text-align: center;
-                ">
-                    <div style="color: #00ff9d; font-weight: 600; font-size: 20px;">
-                        TZS 3,000
-                    </div>
-                    <div style="color: #8a9bbd; font-size: 12px; margin-top: 5px;">
-                        You will receive a USSD prompt on your phone
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn btn-secondary" onclick="closeModal('paymentModal')">
-                    CANCEL
-                </button>
-                <button class="modal-btn btn-primary" onclick="processPayment()">
-                    PAY NOW
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Code Modal -->
-    <div id="codeModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🔑 ENTER PREMIUM CODE</h2>
-                <div style="color: #8a9bbd; font-size: 14px; margin-top: 5px;">
-                    Enter your premium code to activate access
-                </div>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <div class="form-label">Premium Code</div>
-                    <input type="text" id="premiumCode" class="form-input" 
-                           placeholder="STANY2024ABCD" maxlength="20" autocapitalize="characters">
-                </div>
-                <div id="codeStatus" style="
-                    padding: 10px;
-                    border-radius: 8px;
-                    margin: 10px 0;
-                    text-align: center;
-                    display: none;
-                "></div>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn btn-secondary" onclick="closeModal('codeModal')">
-                    CANCEL
-                </button>
-                <button class="modal-btn btn-primary" onclick="activatePremiumCode()">
-                    ACTIVATE CODE
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reseller Modal -->
-    <div id="resellerModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>👑 RESELLER LOGIN</h2>
-                <div style="color: #8a9bbd; font-size: 14px; margin-top: 5px;">
-                    Enter your reseller code to access your codes
-                </div>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <div class="form-label">Reseller Code</div>
-                    <input type="text" id="resellerCode" class="form-input" 
-                           placeholder="RESELLER2024" maxlength="20">
-                </div>
-                <div id="resellerCodesContainer" style="display: none; margin-top: 20px;">
-                    <div style="color: #ffcc00; font-weight: 600; margin-bottom: 10px;">
-                        YOUR CODES:
-                    </div>
-                    <div id="codesList" style="
-                        background: rgba(0, 0, 0, 0.3);
-                        border-radius: 10px;
-                        padding: 15px;
-                        max-height: 200px;
-                        overflow-y: auto;
-                    "></div>
-                    <button onclick="copyAllCodes()" style="
-                        width: 100%;
-                        padding: 12px;
-                        background: #00f7ff;
-                        color: black;
-                        border: none;
-                        border-radius: 10px;
-                        margin-top: 15px;
-                        font-weight: 600;
-                        cursor: pointer;
-                    ">
-                        📋 COPY ALL CODES
-                    </button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn btn-secondary" onclick="closeModal('resellerModal')">
-                    CANCEL
-                </button>
-                <button class="modal-btn btn-primary" onclick="loginReseller()">
-                    LOGIN
-                </button>
-            </div>
-        </div>
-    </div>
-
+    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
+    
     <script>
-        // ===========================================
+        // ============================================
         // FIREBASE CONFIGURATION
-        // ===========================================
+        // ============================================
         const firebaseConfig = {
             apiKey: "AIzaSyDtWAjmGIWVr3QGESAClBzRkQ5AZr5Zeys",
             authDomain: "stanybots.firebaseapp.com",
@@ -762,28 +572,28 @@
             appId: "1:381983533939:web:201157399592c6389df306",
             measurementId: "G-W3C0C280BY"
         };
-
+        
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-
-        // ===========================================
+        
+        // ============================================
         // GLOBAL VARIABLES
-        // ===========================================
+        // ============================================
         let currentUser = null;
-        let userData = null;
+        let deviceId = null;
         let freeTrialActive = false;
         let countdownInterval = null;
-        let deviceId = null;
-
-        // ===========================================
+        
+        // ============================================
         // INITIALIZATION
-        // ===========================================
+        // ============================================
         async function initApp() {
             try {
                 // Generate device ID
-                deviceId = await getDeviceId();
+                deviceId = await generateDeviceId();
+                document.getElementById('deviceId').textContent = deviceId.substring(0, 8) + '...';
                 
                 // Create anonymous user
                 if (!auth.currentUser) {
@@ -791,8 +601,7 @@
                 }
                 
                 currentUser = auth.currentUser;
-                document.getElementById('userIdDisplay').textContent = 
-                    currentUser.uid.substring(0, 8) + '...';
+                document.getElementById('userId').textContent = currentUser.uid.substring(0, 8) + '...';
                 
                 // Check user status
                 await checkUserStatus();
@@ -800,7 +609,7 @@
                 // Load WhatsApp settings
                 await loadWhatsAppSettings();
                 
-                // Hide loading screen
+                // Show premium wall
                 setTimeout(() => {
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('premiumWall').style.display = 'block';
@@ -809,9 +618,9 @@
             } catch (error) {
                 console.error("Initialization error:", error);
                 document.getElementById('loadingScreen').innerHTML = `
-                    <div style="color: #ff0055; text-align: center; padding: 20px;">
-                        <div style="font-size: 24px;">⚠️</div>
-                        <div style="margin-top: 10px;">Error loading app</div>
+                    <div style="color: #ff0055; text-align: center;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 20px;"></i>
+                        <div>Error loading app</div>
                         <button onclick="location.reload()" style="
                             background: #00f7ff;
                             color: black;
@@ -821,38 +630,32 @@
                             margin-top: 20px;
                             font-weight: 600;
                         ">
-                            RELOAD APP
+                            <i class="fas fa-redo"></i> RELOAD APP
                         </button>
                     </div>
                 `;
             }
         }
-
-        // ===========================================
-        // DEVICE ID GENERATION
-        // ===========================================
-        async function getDeviceId() {
-            // Try to get existing device ID from localStorage
-            let deviceId = localStorage.getItem('device_id');
-            
-            if (!deviceId) {
-                // Generate new device ID
-                deviceId = 'DEV' + Date.now() + Math.random().toString(36).substr(2, 6);
-                localStorage.setItem('device_id', deviceId);
+        
+        // Generate unique device ID
+        async function generateDeviceId() {
+            let storedId = localStorage.getItem('device_id');
+            if (!storedId) {
+                storedId = 'DEV_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('device_id', storedId);
             }
-            
-            return deviceId;
+            return storedId;
         }
-
-        // ===========================================
+        
+        // ============================================
         // USER STATUS CHECK
-        // ===========================================
+        // ============================================
         async function checkUserStatus() {
             try {
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
                 
                 if (userDoc.exists) {
-                    userData = userDoc.data();
+                    const userData = userDoc.data();
                     
                     // Check premium status
                     if (userData.premium_active && userData.premium_expires) {
@@ -860,19 +663,18 @@
                         const now = new Date();
                         
                         if (expiresAt > now) {
-                            // User has active premium - activate game
+                            // Premium active - show game
                             activateGame();
                             return;
                         } else {
                             // Premium expired
                             await db.collection('users').doc(currentUser.uid).update({
-                                premium_active: false,
-                                premium_expired_at: new Date()
+                                premium_active: false
                             });
                         }
                     }
                     
-                    // Check free trial status
+                    // Check free trial
                     if (userData.last_free_trial) {
                         const lastTrial = userData.last_free_trial.toDate();
                         const now = new Date();
@@ -881,21 +683,13 @@
                         if (hoursDiff < 24) {
                             freeTrialActive = true;
                             updateFreeTrialUI(lastTrial);
-                        } else {
-                            // Reset free trial
-                            await db.collection('users').doc(currentUser.uid).update({
-                                free_trial_used: false
-                            });
-                            freeTrialActive = false;
-                            document.getElementById('freeTrialBtn').disabled = false;
-                            document.getElementById('freeTrialTimer').style.display = 'none';
                         }
                     }
                     
-                    updateUserStatusText();
+                    updateStatusDisplay(userData);
                     
                 } else {
-                    // Create new user record
+                    // Create new user
                     await db.collection('users').doc(currentUser.uid).set({
                         uid: currentUser.uid,
                         device_id: deviceId,
@@ -904,49 +698,40 @@
                         last_free_trial: null,
                         premium_active: false,
                         premium_expires: null,
-                        total_predictions: 0,
-                        status: 'free'
+                        total_predictions: 0
                     });
                     
-                    userData = {
-                        free_trial_used: false,
-                        premium_active: false
-                    };
-                    
-                    document.getElementById('userStatusText').textContent = "New User";
-                    document.getElementById('userStatusText').style.color = "#00f7ff";
+                    document.getElementById('userStatus').textContent = "New User";
+                    document.getElementById('userStatus').style.color = "#00f7ff";
                 }
                 
             } catch (error) {
                 console.error("User status error:", error);
             }
         }
-
-        function updateUserStatusText() {
+        
+        function updateStatusDisplay(userData) {
             if (userData.premium_active) {
-                document.getElementById('userStatusText').textContent = "Premium Active";
-                document.getElementById('userStatusText').style.color = "#00ff9d";
+                document.getElementById('userStatus').textContent = "Premium Active";
+                document.getElementById('userStatus').style.color = "#00ff9d";
             } else if (freeTrialActive) {
-                document.getElementById('userStatusText').textContent = "Free Trial Used";
-                document.getElementById('userStatusText').style.color = "#ff0055";
+                document.getElementById('userStatus').textContent = "Free Trial Used";
+                document.getElementById('userStatus').style.color = "#ff0055";
             } else {
-                document.getElementById('userStatusText').textContent = "Free User";
-                document.getElementById('userStatusText').style.color = "#ffcc00";
+                document.getElementById('userStatus').textContent = "Free User";
+                document.getElementById('userStatus').style.color = "#ffcc00";
             }
         }
-
-        // ===========================================
+        
+        // ============================================
         // FREE TRIAL SYSTEM
-        // ===========================================
+        // ============================================
         function updateFreeTrialUI(lastTrialTime) {
             document.getElementById('freeTrialBtn').disabled = true;
-            document.getElementById('freeTrialBtn').textContent = "FREE TRIAL USED";
-            document.getElementById('freeTrialTimer').style.display = 'block';
-            
-            // Start countdown
+            document.getElementById('freeTimer').style.display = 'block';
             startCountdown(lastTrialTime);
         }
-
+        
         function startCountdown(lastTrialTime) {
             if (countdownInterval) clearInterval(countdownInterval);
             
@@ -958,11 +743,11 @@
                 
                 if (diff <= 0) {
                     clearInterval(countdownInterval);
-                    document.getElementById('freeTrialTimer').style.display = 'none';
+                    document.getElementById('freeTimer').style.display = 'none';
                     document.getElementById('freeTrialBtn').disabled = false;
-                    document.getElementById('freeTrialBtn').textContent = "USE FREE PREDICTION";
                     freeTrialActive = false;
-                    updateUserStatusText();
+                    document.getElementById('userStatus').textContent = "Free User";
+                    document.getElementById('userStatus').style.color = "#ffcc00";
                     return;
                 }
                 
@@ -975,10 +760,10 @@
                 
             }, 1000);
         }
-
+        
         async function useFreeTrial() {
             if (freeTrialActive) {
-                showStatus("You have already used your free trial today. Please wait 24 hours.", "error");
+                showMessage("You have already used your free trial today. Please wait 24 hours.", "error");
                 return;
             }
             
@@ -989,42 +774,47 @@
                     free_trial_used: true
                 });
                 
-                // Create prediction session
+                // Create free trial session
                 await db.collection('sessions').add({
                     user_id: currentUser.uid,
+                    device_id: deviceId,
                     type: 'free_trial',
                     created_at: new Date(),
-                    expires_at: new Date(Date.now() + (60 * 60 * 1000)), // 1 hour session
-                    predictions_allowed: 1,
-                    predictions_used: 0,
-                    device_id: deviceId
+                    expires_at: new Date(Date.now() + (60 * 60 * 1000)), // 1 hour
+                    predictions_allowed: 1
                 });
                 
-                // Activate game with free trial
+                // Activate game
                 activateGame();
                 
-                showStatus("Free trial activated! You have 1 prediction available.", "success");
+                showMessage("Free trial activated! You have 1 prediction available.", "success");
                 
                 // Update UI
                 freeTrialActive = true;
                 updateFreeTrialUI(new Date());
-                updateUserStatusText();
+                document.getElementById('userStatus').textContent = "Free Trial Active";
+                document.getElementById('userStatus').style.color = "#667eea";
                 
             } catch (error) {
                 console.error("Free trial error:", error);
-                showStatus("Error activating free trial. Please try again.", "error");
+                showMessage("Error activating free trial", "error");
             }
         }
-
-        // ===========================================
+        
+        // ============================================
         // PREMIUM CODE ACTIVATION
-        // ===========================================
+        // ============================================
         async function activatePremiumCode() {
             const codeInput = document.getElementById('premiumCode');
             const code = codeInput.value.trim().toUpperCase();
             
             if (!code) {
-                showCodeStatus("Please enter a premium code", "error");
+                showMessage("Please enter a premium code", "error");
+                return;
+            }
+            
+            if (code.length < 8) {
+                showMessage("Invalid code format", "error");
                 return;
             }
             
@@ -1033,7 +823,7 @@
                 const codeDoc = await db.collection('premium_codes').doc(code).get();
                 
                 if (!codeDoc.exists) {
-                    showCodeStatus("Invalid premium code", "error");
+                    showMessage("Invalid premium code", "error");
                     return;
                 }
                 
@@ -1041,31 +831,31 @@
                 
                 // Validate code
                 if (!codeData.is_active) {
-                    showCodeStatus("This code has expired", "error");
+                    showMessage("This code has expired", "error");
                     return;
                 }
                 
                 if (codeData.used_count >= codeData.max_uses) {
-                    showCodeStatus("This code has been used already", "error");
+                    showMessage("This code has been used already", "error");
                     return;
                 }
                 
                 // Check if code already used by this device
                 if (codeData.used_devices && codeData.used_devices.includes(deviceId)) {
-                    showCodeStatus("This code has already been used on this device", "error");
+                    showMessage("This code has already been used on this device", "error");
                     return;
                 }
                 
                 // Check if user already has premium
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
                 if (userDoc.exists() && userDoc.data().premium_active) {
-                    showCodeStatus("You already have active premium", "error");
+                    showMessage("You already have active premium", "error");
                     return;
                 }
                 
                 // Calculate expiry date
                 const expiresAt = new Date();
-                expiresAt.setDate(expiresAt.getDate() + codeData.duration_days);
+                expiresAt.setDate(expiresAt.getDate() + (codeData.duration_days || 30));
                 
                 // Update code usage
                 await db.collection('premium_codes').doc(code).update({
@@ -1081,121 +871,114 @@
                     premium_active: true,
                     premium_expires: expiresAt,
                     premium_code: code,
-                    premium_activated_at: new Date(),
-                    premium_type: 'code'
+                    premium_activated_at: new Date()
                 });
                 
-                showCodeStatus("Premium activated successfully! Redirecting...", "success");
+                showMessage("Premium activated successfully! Redirecting to game...", "success");
                 
-                // Close modal and activate game after 2 seconds
+                // Clear input and redirect
+                codeInput.value = '';
                 setTimeout(() => {
-                    closeModal('codeModal');
                     activateGame();
                 }, 2000);
                 
             } catch (error) {
                 console.error("Code activation error:", error);
-                showCodeStatus("Error activating code. Please try again.", "error");
+                showMessage("Error activating code", "error");
             }
         }
-
-        // ===========================================
+        
+        // ============================================
         // RESELLER SYSTEM
-        // ===========================================
+        // ============================================
         async function loginReseller() {
             const codeInput = document.getElementById('resellerCode');
-            const code = codeInput.value.trim().toUpperCase();
+            const resellerCode = codeInput.value.trim().toUpperCase();
             
-            if (!code) {
-                alert("Please enter reseller code");
+            if (!resellerCode) {
+                showMessage("Please enter reseller code", "error");
                 return;
             }
             
             try {
-                // Check if reseller code exists
-                const resellerDoc = await db.collection('reseller_codes').doc(code).get();
+                // Check reseller code
+                const resellerDoc = await db.collection('resellers').doc(resellerCode).get();
                 
                 if (!resellerDoc.exists) {
-                    alert("Invalid reseller code");
+                    showMessage("Invalid reseller code", "error");
                     return;
                 }
                 
                 const resellerData = resellerDoc.data();
                 
                 if (!resellerData.is_active) {
-                    alert("This reseller code is inactive");
+                    showMessage("This reseller account is inactive", "error");
                     return;
                 }
                 
                 // Get reseller's codes
-                const codesQuery = await db.collection('premium_codes')
-                    .where('reseller_code', '==', code)
+                const codesSnapshot = await db.collection('premium_codes')
+                    .where('reseller_code', '==', resellerCode)
                     .where('is_active', '==', true)
                     .get();
                 
-                if (codesQuery.empty) {
-                    alert("No codes found for this reseller");
+                if (codesSnapshot.empty) {
+                    showMessage("No codes available for this reseller", "error");
                     return;
                 }
                 
                 // Display codes
-                const codesList = document.getElementById('codesList');
-                codesList.innerHTML = '';
+                const codesContainer = document.getElementById('resellerCodes');
+                const copyBtn = document.getElementById('copyAllBtn');
                 
-                codesQuery.forEach(doc => {
+                codesContainer.innerHTML = '';
+                let codesList = [];
+                
+                codesSnapshot.forEach(doc => {
                     const codeData = doc.data();
                     const codeElement = document.createElement('div');
-                    codeElement.style.cssText = `
-                        padding: 10px;
-                        margin-bottom: 8px;
-                        background: rgba(0, 247, 255, 0.1);
-                        border-radius: 8px;
-                        border: 1px solid rgba(0, 247, 255, 0.3);
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    `;
+                    codeElement.className = 'code-item';
+                    
+                    const usedCount = codeData.used_count || 0;
+                    const maxUses = codeData.max_uses || 1;
+                    const isUsed = usedCount >= maxUses;
                     
                     codeElement.innerHTML = `
-                        <div>
-                            <strong style="color: #00f7ff;">${codeData.code}</strong>
-                            <div style="font-size: 12px; color: #8a9bbd;">
-                                Used: ${codeData.used_count || 0}/${codeData.max_uses || 1}
-                            </div>
-                        </div>
-                        <div style="color: ${codeData.used_count >= codeData.max_uses ? '#ff0055' : '#00ff9d'}; font-size: 12px;">
-                            ${codeData.used_count >= codeData.max_uses ? 'USED' : 'ACTIVE'}
+                        <div class="code-text">${codeData.code}</div>
+                        <div class="code-status ${isUsed ? 'status-used' : 'status-active'}">
+                            ${isUsed ? 'USED' : 'ACTIVE'}
                         </div>
                     `;
                     
-                    codesList.appendChild(codeElement);
+                    codesContainer.appendChild(codeElement);
+                    codesList.push(codeData.code);
                 });
                 
-                // Show codes container
-                document.getElementById('resellerCodesContainer').style.display = 'block';
+                // Store codes for copying
+                codesContainer.dataset.codes = JSON.stringify(codesList);
+                codesContainer.style.display = 'block';
+                copyBtn.style.display = 'block';
+                
+                showMessage(`Found ${codesList.length} codes for reseller`, "success");
                 
             } catch (error) {
                 console.error("Reseller login error:", error);
-                alert("Error loading reseller codes");
+                showMessage("Error loading reseller codes", "error");
             }
         }
-
+        
         async function copyAllCodes() {
-            const codes = [];
-            const codeElements = document.querySelectorAll('#codesList strong');
-            
-            codeElements.forEach(el => {
-                codes.push(el.textContent);
-            });
+            const codesContainer = document.getElementById('resellerCodes');
+            const codes = JSON.parse(codesContainer.dataset.codes || '[]');
             
             if (codes.length === 0) {
-                alert("No codes to copy");
+                showMessage("No codes to copy", "error");
                 return;
             }
             
             try {
                 await navigator.clipboard.writeText(codes.join('\n'));
-                alert(`${codes.length} codes copied to clipboard!`);
+                showMessage(`${codes.length} codes copied to clipboard!`, "success");
             } catch (error) {
                 // Fallback for older browsers
                 const textArea = document.createElement('textarea');
@@ -1204,23 +987,21 @@
                 textArea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
-                alert(`${codes.length} codes copied to clipboard!`);
+                showMessage(`${codes.length} codes copied!`, "success");
             }
         }
-
-        // ===========================================
-        // PAYMENT SYSTEM (HARAKAPAY)
-        // ===========================================
+        
+        // ============================================
+        // PAYMENT SYSTEM
+        // ============================================
         async function processPayment() {
             const phoneInput = document.getElementById('paymentPhone');
             const phone = phoneInput.value.trim();
             
             if (!phone || phone.length !== 10 || !phone.startsWith('07')) {
-                alert("Please enter valid phone number (0712345678)");
+                showMessage("Please enter valid phone number (0712345678)", "error");
                 return;
             }
-            
-            showLoading(true);
             
             try {
                 // Call HarakaPay API
@@ -1250,34 +1031,30 @@
                     phone: phone,
                     amount: 3000,
                     status: 'pending',
-                    created_at: new Date(),
-                    payment_gateway: 'harakapay'
+                    created_at: new Date()
                 });
                 
-                // Start polling for payment status
+                // Start payment polling
                 pollPaymentStatus(data.order_id, transactionRef.id);
                 
-                showStatus("Payment request sent! Check your phone for USSD prompt.", "success");
-                closeModal('paymentModal');
+                showMessage("Payment request sent! Check your phone for USSD prompt.", "success");
                 
             } catch (error) {
                 console.error("Payment error:", error);
-                showStatus("Payment failed: " + error.message, "error");
-                showLoading(false);
+                showMessage("Payment failed: " + error.message, "error");
             }
         }
-
+        
         async function pollPaymentStatus(orderId, transactionId) {
             let attempts = 0;
-            const maxAttempts = 60; // 5 minutes
-            const pollInterval = 5000; // 5 seconds
+            const maxAttempts = 60;
             
             const poll = setInterval(async () => {
                 attempts++;
                 
                 if (attempts > maxAttempts) {
                     clearInterval(poll);
-                    showStatus("Payment timeout. Please try again.", "error");
+                    showMessage("Payment timeout", "error");
                     return;
                 }
                 
@@ -1296,25 +1073,15 @@
                         // Update transaction
                         await db.collection('transactions').doc(transactionId).update({
                             status: 'completed',
-                            completed_at: new Date(),
-                            payment_data: data
+                            completed_at: new Date()
                         });
                         
-                        // Activate premium for user
+                        // Generate premium code
+                        const premiumCode = `PAY${Date.now()}${Math.random().toString(36).substr(2, 6)}`.toUpperCase();
                         const expiresAt = new Date();
-                        expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+                        expiresAt.setDate(expiresAt.getDate() + 30);
                         
-                        await db.collection('users').doc(currentUser.uid).update({
-                            premium_active: true,
-                            premium_expires: expiresAt,
-                            premium_activated_at: new Date(),
-                            premium_type: 'payment',
-                            payment_order_id: orderId
-                        });
-                        
-                        // Generate premium code for reference
-                        const premiumCode = `PAY${Date.now()}${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
-                        
+                        // Create premium code
                         await db.collection('premium_codes').doc(premiumCode).set({
                             code: premiumCode,
                             type: 'single_use',
@@ -1325,11 +1092,19 @@
                             duration_days: 30,
                             created_at: new Date(),
                             expires_at: new Date(Date.now() + (365 * 24 * 60 * 60 * 1000)),
-                            created_by: 'payment_system',
-                            payment_order_id: orderId
+                            created_by: 'payment'
                         });
                         
-                        showStatus("Payment successful! Premium activated.", "success");
+                        // Activate premium for user
+                        await db.collection('users').doc(currentUser.uid).update({
+                            premium_active: true,
+                            premium_expires: expiresAt,
+                            premium_code: premiumCode,
+                            premium_activated_at: new Date(),
+                            premium_type: 'payment'
+                        });
+                        
+                        showMessage("Payment successful! Premium activated.", "success");
                         
                         // Activate game
                         setTimeout(() => {
@@ -1339,148 +1114,77 @@
                     } else if (data.success && data.payment.status === 'failed') {
                         clearInterval(poll);
                         await db.collection('transactions').doc(transactionId).update({
-                            status: 'failed',
-                            failed_at: new Date()
+                            status: 'failed'
                         });
-                        showStatus("Payment failed. Please try again.", "error");
+                        showMessage("Payment failed", "error");
                     }
                 } catch (error) {
                     console.error("Polling error:", error);
                 }
-            }, pollInterval);
-        }
-
-        // ===========================================
-        // GAME ACTIVATION
-        // ===========================================
-        function activateGame() {
-            document.getElementById('premiumWall').style.display = 'none';
-            document.getElementById('gameContainer').style.display = 'flex';
-            document.getElementById('floatingIcons').style.display = 'flex';
-            
-            // Update game status
-            if (freeTrialActive) {
-                document.getElementById('gameStatus').textContent = "FREE TRIAL";
-                document.getElementById('gameStatus').style.background = "rgba(102, 126, 234, 0.2)";
-                document.getElementById('gameStatus').style.color = "#667eea";
-            } else {
-                document.getElementById('gameStatus').textContent = "PREMIUM";
-                document.getElementById('gameStatus').style.background = "rgba(0, 255, 157, 0.2)";
-                document.getElementById('gameStatus').style.color = "#00ff9d";
-            }
-            
-            // Load premium expiry
-            if (userData.premium_expires) {
-                const expiresAt = userData.premium_expires.toDate();
-                const formattedDate = expiresAt.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                document.getElementById('premiumExpiry').textContent = formattedDate;
-            }
-            
-            // Here you would load your actual game
-            // For now, we just show a placeholder
-        }
-
-        // ===========================================
-        // UTILITY FUNCTIONS
-        // ===========================================
-        function showModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-        }
-        
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-        
-        function showPaymentModal() {
-            showModal('paymentModal');
-        }
-        
-        function showCodeModal() {
-            document.getElementById('premiumCode').value = '';
-            document.getElementById('codeStatus').style.display = 'none';
-            showModal('codeModal');
-        }
-        
-        function showResellerModal() {
-            document.getElementById('resellerCode').value = '';
-            document.getElementById('resellerCodesContainer').style.display = 'none';
-            showModal('resellerModal');
-        }
-        
-        function showCodeStatus(message, type) {
-            const statusDiv = document.getElementById('codeStatus');
-            statusDiv.textContent = message;
-            statusDiv.style.display = 'block';
-            statusDiv.style.background = type === 'success' ? 'rgba(0, 255, 157, 0.1)' : 'rgba(255, 0, 85, 0.1)';
-            statusDiv.style.border = type === 'success' ? '1px solid #00ff9d' : '1px solid #ff0055';
-            statusDiv.style.color = type === 'success' ? '#00ff9d' : '#ff0055';
-        }
-        
-        function showStatus(message, type) {
-            const statusDiv = document.getElementById('statusMessage');
-            statusDiv.textContent = message;
-            statusDiv.style.display = 'block';
-            statusDiv.style.background = type === 'success' ? 'rgba(0, 255, 157, 0.1)' : 'rgba(255, 0, 85, 0.1)';
-            statusDiv.style.border = type === 'success' ? '1px solid #00ff9d' : '1px solid #ff0055';
-            statusDiv.style.color = type === 'success' ? '#00ff9d' : '#ff0055';
-            
-            setTimeout(() => {
-                statusDiv.style.display = 'none';
             }, 5000);
         }
         
-        function showLoading(show) {
-            if (show) {
-                document.getElementById('loadingScreen').style.display = 'flex';
-            } else {
-                document.getElementById('loadingScreen').style.display = 'none';
-            }
+        // ============================================
+        // GAME ACTIVATION
+        // ============================================
+        function activateGame() {
+            document.getElementById('premiumWall').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block';
+            document.getElementById('floatingIcons').style.display = 'flex';
+            
+            // Initialize your game here
+            // This is where you would call your existing game initialization function
         }
         
+        function logout() {
+            document.getElementById('gameContainer').style.display = 'none';
+            document.getElementById('floatingIcons').style.display = 'none';
+            document.getElementById('premiumWall').style.display = 'block';
+            location.reload();
+        }
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
         async function loadWhatsAppSettings() {
             try {
                 const settingsDoc = await db.collection('admin_settings').doc('config').get();
                 
                 if (settingsDoc.exists) {
                     const settings = settingsDoc.data();
-                    const whatsappBtn = document.getElementById('whatsappBtn');
+                    const whatsappBtn = document.getElementById('whatsappLink');
                     
                     if (settings.whatsapp_number) {
-                        const whatsappLink = `https://wa.me/${settings.whatsapp_number.replace('+', '')}`;
-                        whatsappBtn.href = whatsappLink;
+                        const cleanNumber = settings.whatsapp_number.replace('+', '');
+                        whatsappBtn.href = `https://wa.me/${cleanNumber}`;
                     }
                 }
             } catch (error) {
-                console.error("Settings load error:", error);
+                console.error("Settings error:", error);
             }
         }
         
-        function resetApp() {
-            document.getElementById('gameContainer').style.display = 'none';
-            document.getElementById('floatingIcons').style.display = 'none';
-            document.getElementById('premiumWall').style.display = 'block';
-            location.reload();
+        function showMessage(text, type) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = text;
+            messageBox.className = `message message-${type}`;
+            messageBox.style.display = 'block';
+            
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000);
         }
-
-        // ===========================================
+        
+        // ============================================
         // INITIALIZE APP
-        // ===========================================
+        // ============================================
         window.addEventListener('DOMContentLoaded', initApp);
         
-        // Prevent pinch zoom
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        });
-        
         // Prevent context menu
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        
+        // Prevent zoom
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
     </script>
 </body>
 </html>
