@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin Dashboard - Mines Predictor</title>
+    <title>Admin Panel - Stany Mines Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&amp;family=Orbitron:wght@400;700;900&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <style>
-        /* === ADMIN THEME === */
         :root {
             --admin-bg: #0f1523;
             --admin-card: rgba(20, 25, 40, 0.95);
@@ -47,7 +47,7 @@
             padding: 20px;
         }
 
-        /* === LOGIN PAGE === */
+        /* Login Page */
         .login-container {
             display: flex;
             justify-content: center;
@@ -88,16 +88,11 @@
             font-size: 1rem;
         }
 
-        .login-input:focus {
-            outline: none;
-            border-color: var(--admin-primary);
-        }
-
-        /* === HEADER === */
+        /* Dashboard */
         .admin-header {
             background: var(--admin-card);
             border-radius: var(--radius);
-            padding: 20px;
+            padding: 25px;
             margin-bottom: 30px;
             border: 2px solid var(--admin-border);
             display: flex;
@@ -114,18 +109,13 @@
             letter-spacing: 1px;
         }
 
-        .header-left .subtitle {
-            color: var(--admin-muted);
-            font-size: 0.9rem;
-        }
-
         .header-right {
             display: flex;
             gap: 15px;
             align-items: center;
         }
 
-        /* === STATS CARDS === */
+        /* Stats Cards */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -139,6 +129,7 @@
             padding: 25px;
             border: 2px solid var(--admin-border);
             transition: all 0.3s;
+            text-align: center;
         }
 
         .stat-card:hover {
@@ -146,32 +137,11 @@
             border-color: var(--admin-primary);
         }
 
-        .stat-card.total-users {
-            border-color: var(--admin-primary);
-        }
-
-        .stat-card.premium-users {
-            border-color: var(--admin-success);
-        }
-
-        .stat-card.daily-active {
-            border-color: var(--admin-warning);
-        }
-
-        .stat-card.total-revenue {
-            border-color: #ff00ff;
-        }
-
         .stat-icon {
             font-size: 2.5rem;
             margin-bottom: 15px;
             display: inline-block;
         }
-
-        .total-users .stat-icon { color: var(--admin-primary); }
-        .premium-users .stat-icon { color: var(--admin-success); }
-        .daily-active .stat-icon { color: var(--admin-warning); }
-        .total-revenue .stat-icon { color: #ff00ff; }
 
         .stat-value {
             font-family: var(--font-cyber);
@@ -187,18 +157,7 @@
             letter-spacing: 1px;
         }
 
-        .stat-change {
-            font-size: 0.8rem;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .stat-change.positive { color: var(--admin-success); }
-        .stat-change.negative { color: var(--admin-danger); }
-
-        /* === CONTROL PANELS === */
+        /* Control Panels */
         .control-panels {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -225,6 +184,7 @@
             gap: 10px;
         }
 
+        /* Forms */
         .form-group {
             margin-bottom: 20px;
         }
@@ -247,17 +207,12 @@
             font-size: 1rem;
         }
 
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            outline: none;
-            border-color: var(--admin-primary);
-        }
-
         .form-textarea {
             min-height: 100px;
             resize: vertical;
         }
 
-        /* === BUTTONS === */
+        /* Buttons */
         .admin-btn {
             padding: 12px 25px;
             border: none;
@@ -294,21 +249,12 @@
             color: #000;
         }
 
-        .admin-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .admin-btn:active {
-            transform: translateY(0);
-        }
-
         .btn-block {
             width: 100%;
             justify-content: center;
         }
 
-        /* === TABLES === */
+        /* Tables */
         .table-container {
             background: var(--admin-card);
             border-radius: var(--radius);
@@ -336,14 +282,11 @@
         }
 
         .admin-table td {
-            padding: 15px;
+            padding: 12px 15px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .admin-table tr:hover {
-            background: rgba(0, 247, 255, 0.05);
-        }
-
+        /* Badges */
         .badge {
             padding: 5px 10px;
             border-radius: 20px;
@@ -371,30 +314,7 @@
             border: 1px solid var(--admin-danger);
         }
 
-        .badge-info {
-            background: rgba(0, 247, 255, 0.2);
-            color: var(--admin-primary);
-            border: 1px solid var(--admin-primary);
-        }
-
-        /* === STATUS INDICATORS === */
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .status-active .status-dot { background: var(--admin-success); }
-        .status-inactive .status-dot { background: var(--admin-danger); }
-        .status-pending .status-dot { background: var(--admin-warning); }
-
-        /* === LOADING === */
+        /* Loading */
         .loading-overlay {
             position: fixed;
             inset: 0;
@@ -422,19 +342,12 @@
             margin-bottom: 20px;
         }
 
-        .loading-text {
-            font-family: var(--font-cyber);
-            color: var(--admin-primary);
-            font-size: 1rem;
-            text-align: center;
-        }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        /* === NOTIFICATION === */
+        /* Notification */
         .notification {
             position: fixed;
             top: 20px;
@@ -468,13 +381,32 @@
             border: 2px solid var(--admin-danger);
         }
 
-        .notification.warning {
-            background: var(--admin-warning);
-            color: #000;
-            border: 2px solid var(--admin-warning);
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        /* === RESPONSIVE === */
+        .tab {
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--admin-border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-cyber);
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: var(--admin-primary);
+            color: #000;
+            border-color: var(--admin-primary);
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
             .admin-container {
                 padding: 10px;
@@ -485,46 +417,14 @@
                 text-align: center;
             }
             
-            .header-right {
-                width: 100%;
-                justify-content: center;
-            }
-            
             .control-panels {
                 grid-template-columns: 1fr;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .table-container {
-                padding: 15px;
-            }
-            
-            .admin-table {
-                font-size: 0.9rem;
-            }
-            
-            .admin-table th,
-            .admin-table td {
-                padding: 10px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .login-card {
-                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Overlay -->
+    <!-- Loading -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="cyber-loader"></div>
         <div class="loading-text" id="loadingText">LOADING...</div>
@@ -537,7 +437,7 @@
     <div class="login-container" id="loginPage">
         <div class="login-card">
             <h1 class="login-title">
-                <i class="fas fa-lock"></i> ADMIN LOGIN
+                <i class="fas fa-lock"></i> ADMIN PANEL
             </h1>
             
             <input type="password" class="login-input" id="adminPassword" 
@@ -548,85 +448,255 @@
             </button>
             
             <div style="margin-top: 20px; text-align: center; color: var(--admin-muted); font-size: 0.8rem;">
-                <p>Mines Predictor Admin Panel</p>
-                <p>v2.0 - Premium System</p>
+                <p>Stany Mines Pro Admin</p>
+                <p>© 2024 Developed by StanyTz</p>
             </div>
         </div>
     </div>
 
-    <!-- Admin Dashboard -->
+    <!-- Dashboard -->
     <div class="admin-container" id="dashboard" style="display: none;">
         <!-- Header -->
         <div class="admin-header">
             <div class="header-left">
-                <h1 id="adminAppName">MINES PREDICTOR ADMIN</h1>
-                <div class="subtitle">
-                    <i class="fas fa-shield-alt"></i> Premium Control Panel
-                    <span id="currentTime" style="margin-left: 15px;"></span>
+                <h1 id="adminTitle">STANY MINES PRO ADMIN</h1>
+                <div style="color: var(--admin-muted); font-size: 0.9rem;">
+                    <i class="fas fa-shield-alt"></i> Control Panel • 
+                    <span id="currentTime"></span>
                 </div>
             </div>
             
             <div class="header-right">
-                <button class="admin-btn admin-btn-warning" onclick="refreshData()">
+                <button class="admin-btn admin-btn-warning" onclick="refreshDashboard()">
                     <i class="fas fa-sync-alt"></i> REFRESH
                 </button>
-                
                 <button class="admin-btn admin-btn-danger" onclick="adminLogout()">
                     <i class="fas fa-sign-out-alt"></i> LOGOUT
                 </button>
             </div>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-            <div class="stat-card total-users">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('dashboardTab')">Dashboard</div>
+            <div class="tab" onclick="showTab('usersTab')">Users</div>
+            <div class="tab" onclick="showTab('codesTab')">Codes</div>
+            <div class="tab" onclick="showTab('resellersTab')">Resellers</div>
+            <div class="tab" onclick="showTab('paymentsTab')">Payments</div>
+            <div class="tab" onclick="showTab('settingsTab')">Settings</div>
+            <div class="tab" onclick="showTab('toolsTab')">Tools</div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboardTab" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: var(--admin-primary);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">TOTAL USERS</div>
                 </div>
-                <div class="stat-value" id="totalUsers">0</div>
-                <div class="stat-label">TOTAL USERS</div>
-                <div class="stat-change positive" id="usersChange">
-                    <i class="fas fa-arrow-up"></i> Loading...
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: var(--admin-success);">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="stat-value" id="premiumUsers">0</div>
+                    <div class="stat-label">PREMIUM USERS</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: var(--admin-warning);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-value" id="dailyActive">0</div>
+                    <div class="stat-label">DAILY ACTIVE</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: #ff00ff;">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="stat-value" id="totalRevenue">0 TZS</div>
+                    <div class="stat-label">TOTAL REVENUE</div>
                 </div>
             </div>
 
-            <div class="stat-card premium-users">
-                <div class="stat-icon">
-                    <i class="fas fa-crown"></i>
+            <div class="control-panels">
+                <div class="control-panel">
+                    <h2 class="panel-title">
+                        <i class="fas fa-chart-pie"></i> QUICK ACTIONS
+                    </h2>
+                    <div style="display: grid; gap: 10px;">
+                        <button class="admin-btn admin-btn-primary" onclick="generatePremiumCodes()">
+                            <i class="fas fa-key"></i> Generate Premium Codes
+                        </button>
+                        <button class="admin-btn admin-btn-success" onclick="generateResellerCodes()">
+                            <i class="fas fa-user-tie"></i> Generate Reseller Codes
+                        </button>
+                        <button class="admin-btn admin-btn-warning" onclick="checkHarakaPayBalance()">
+                            <i class="fas fa-wallet"></i> Check Balance
+                        </button>
+                    </div>
                 </div>
-                <div class="stat-value" id="premiumUsers">0</div>
-                <div class="stat-label">PREMIUM USERS</div>
-                <div class="stat-change positive" id="premiumChange">
-                    <i class="fas fa-arrow-up"></i> Loading...
-                </div>
-            </div>
 
-            <div class="stat-card daily-active">
-                <div class="stat-icon">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="stat-value" id="dailyActive">0</div>
-                <div class="stat-label">DAILY ACTIVE</div>
-                <div class="stat-change positive" id="dailyChange">
-                    <i class="fas fa-arrow-up"></i> Loading...
-                </div>
-            </div>
-
-            <div class="stat-card total-revenue">
-                <div class="stat-icon">
-                    <i class="fas fa-money-bill-wave"></i>
-                </div>
-                <div class="stat-value" id="totalRevenue">0 TZS</div>
-                <div class="stat-label">TOTAL REVENUE</div>
-                <div class="stat-change positive" id="revenueChange">
-                    <i class="fas fa-arrow-up"></i> Loading...
+                <div class="control-panel">
+                    <h2 class="panel-title">
+                        <i class="fas fa-bell"></i> RECENT ACTIVITY
+                    </h2>
+                    <div id="recentActivity" style="min-height: 150px; color: var(--admin-muted);">
+                        Loading activity...
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Control Panels -->
-        <div class="control-panels">
-            <!-- App Settings Panel -->
+        <!-- Users Tab -->
+        <div id="usersTab" class="tab-content" style="display: none;">
+            <div class="table-container">
+                <h2 class="panel-title">
+                    <i class="fas fa-users-cog"></i> USERS MANAGEMENT
+                </h2>
+                <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+                    <input type="text" class="form-input" id="searchUser" placeholder="Search users..." style="flex: 1;">
+                    <button class="admin-btn admin-btn-primary" onclick="searchUsers()">
+                        <i class="fas fa-search"></i> SEARCH
+                    </button>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Device ID</th>
+                            <th>Status</th>
+                            <th>Premium Expiry</th>
+                            <th>Games Played</th>
+                            <th>Last Active</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="6" style="text-align: center; padding: 30px;">Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Codes Tab -->
+        <div id="codesTab" class="tab-content" style="display: none;">
+            <div class="control-panels">
+                <div class="control-panel">
+                    <h2 class="panel-title">
+                        <i class="fas fa-key"></i> GENERATE CODES
+                    </h2>
+                    <div class="form-group">
+                        <label class="form-label">Code Type</label>
+                        <select class="form-select" id="codeType">
+                            <option value="premium">Premium Codes</option>
+                            <option value="reseller">Reseller Codes</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Number of Codes</label>
+                        <input type="number" class="form-input" id="codeCount" value="10" min="1" max="1000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Duration (Days)</label>
+                        <input type="number" class="form-input" id="codeDuration" value="30" min="1">
+                    </div>
+                    
+                    <div class="form-group" id="resellerSettings" style="display: none;">
+                        <label class="form-label">Reseller Limit (Codes)</label>
+                        <input type="number" class="form-input" id="resellerLimit" value="100" min="1">
+                    </div>
+                    
+                    <button class="admin-btn admin-btn-primary btn-block" onclick="generateCodes()">
+                        <i class="fas fa-bolt"></i> GENERATE CODES
+                    </button>
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label class="form-label">Generated Codes</label>
+                        <textarea class="form-textarea" id="generatedCodes" readonly></textarea>
+                    </div>
+                </div>
+                
+                <div class="control-panel">
+                    <h2 class="panel-title">
+                        <i class="fas fa-list"></i> CODES MANAGEMENT
+                    </h2>
+                    <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+                        <select class="form-select" id="codesFilter" style="flex: 1;">
+                            <option value="all">All Codes</option>
+                            <option value="unused">Unused</option>
+                            <option value="used">Used</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                        <button class="admin-btn" onclick="loadCodes()">
+                            <i class="fas fa-filter"></i> FILTER
+                        </button>
+                    </div>
+                    <div id="codesList" style="max-height: 400px; overflow-y: auto;">
+                        Loading codes...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resellers Tab -->
+        <div id="resellersTab" class="tab-content" style="display: none;">
+            <div class="table-container">
+                <h2 class="panel-title">
+                    <i class="fas fa-user-tie"></i> RESELLERS MANAGEMENT
+                </h2>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Reseller ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Total Codes</th>
+                            <th>Used Codes</th>
+                            <th>Earnings</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resellersTableBody">
+                        <tr><td colspan="8" style="text-align: center; padding: 30px;">Loading resellers...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Payments Tab -->
+        <div id="paymentsTab" class="tab-content" style="display: none;">
+            <div class="table-container">
+                <h2 class="panel-title">
+                    <i class="fas fa-credit-card"></i> PAYMENT HISTORY
+                </h2>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Phone</th>
+                            <th>Amount</th>
+                            <th>Package</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTableBody">
+                        <tr><td colspan="7" style="text-align: center; padding: 30px;">Loading payments...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settingsTab" class="tab-content" style="display: none;">
             <div class="control-panel">
                 <h2 class="panel-title">
                     <i class="fas fa-cog"></i> APP SETTINGS
@@ -634,204 +704,74 @@
                 
                 <div class="form-group">
                     <label class="form-label">App Name</label>
-                    <input type="text" class="form-input" id="appNameInput" 
-                           placeholder="Enter app name">
+                    <input type="text" class="form-input" id="appName" placeholder="Stany Mines Pro">
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">WhatsApp Number</label>
-                    <input type="text" class="form-input" id="whatsappInput" 
-                           placeholder="255XXXXXXXXX">
+                    <label class="form-label">WhatsApp Number (with country code)</label>
+                    <input type="text" class="form-input" id="whatsappNumber" placeholder="255XXXXXXXXX">
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Channel Link</label>
-                    <input type="text" class="form-input" id="channelInput" 
-                           placeholder="https://whatsapp.com/channel/...">
+                    <label class="form-label">WhatsApp Channel Link</label>
+                    <input type="text" class="form-input" id="channelLink" placeholder="https://whatsapp.com/channel/...">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">HarakaPay API Key</label>
-                    <input type="text" class="form-input" id="apiKeyInput" 
-                           placeholder="hpk_xxxxxxxxxxxxxxxx" value="hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae">
+                    <input type="text" class="form-input" id="apiKey" value="hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae">
                 </div>
                 
-                <button class="admin-btn admin-btn-success btn-block" onclick="saveAppSettings()">
+                <div class="form-group">
+                    <label class="form-label">Admin Password</label>
+                    <input type="password" class="form-input" id="adminPass" placeholder="Leave blank to keep current">
+                </div>
+                
+                <button class="admin-btn admin-btn-success btn-block" onclick="saveSettings()">
                     <i class="fas fa-save"></i> SAVE SETTINGS
                 </button>
             </div>
+        </div>
 
-            <!-- Generate Codes Panel -->
+        <!-- Tools Tab -->
+        <div id="toolsTab" class="tab-content" style="display: none;">
             <div class="control-panel">
                 <h2 class="panel-title">
-                    <i class="fas fa-key"></i> GENERATE CODES
+                    <i class="fas fa-tools"></i> SYSTEM TOOLS
                 </h2>
                 
-                <div class="form-group">
-                    <label class="form-label">Number of Codes</label>
-                    <select class="form-select" id="codeCount">
-                        <option value="10">10 Codes</option>
-                        <option value="20">20 Codes</option>
-                        <option value="50">50 Codes</option>
-                        <option value="100">100 Codes</option>
-                    </select>
+                <div style="display: grid; gap: 15px;">
+                    <button class="admin-btn admin-btn-warning" onclick="clearExpiredCodes()">
+                        <i class="fas fa-trash"></i> Clear Expired Codes
+                    </button>
+                    
+                    <button class="admin-btn admin-btn-danger" onclick="resetAllFreeTrials()">
+                        <i class="fas fa-redo"></i> Reset All Free Trials
+                    </button>
+                    
+                    <button class="admin-btn" onclick="exportAllData()">
+                        <i class="fas fa-download"></i> Export All Data
+                    </button>
+                    
+                    <button class="admin-btn admin-btn-danger" onclick="clearAllData()">
+                        <i class="fas fa-bomb"></i> Clear All Data (Danger)
+                    </button>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">Duration (Days)</label>
-                    <select class="form-select" id="codeDuration">
-                        <option value="7">7 Days (Weekly)</option>
-                        <option value="30" selected>30 Days (Monthly)</option>
-                        <option value="90">90 Days (Quarterly)</option>
-                        <option value="365">365 Days (Yearly)</option>
-                        <option value="3650">Lifetime (10 Years)</option>
-                    </select>
+                <div style="margin-top: 30px; padding: 20px; background: rgba(255, 0, 0, 0.1); border-radius: 8px; border: 1px solid var(--admin-danger);">
+                    <h3 style="color: var(--admin-danger); margin-bottom: 10px;">
+                        <i class="fas fa-exclamation-triangle"></i> DANGER ZONE
+                    </h3>
+                    <p style="color: var(--admin-muted); font-size: 0.9rem;">
+                        These actions cannot be undone. Use with extreme caution.
+                    </p>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Code Prefix</label>
-                    <input type="text" class="form-input" id="codePrefix" 
-                           placeholder="PREM" value="PREM">
-                </div>
-                
-                <button class="admin-btn admin-btn-primary btn-block" onclick="generateCodes()">
-                    <i class="fas fa-bolt"></i> GENERATE CODES
-                </button>
-                
-                <div class="form-group" style="margin-top: 20px;">
-                    <label class="form-label">Generated Codes</label>
-                    <textarea class="form-textarea" id="generatedCodes" 
-                              placeholder="Codes will appear here..." readonly></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- Users Table -->
-        <div class="table-container">
-            <h2 class="panel-title" style="margin-bottom: 20px;">
-                <i class="fas fa-users-cog"></i> USERS MANAGEMENT
-            </h2>
-            
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Device ID</th>
-                        <th>Status</th>
-                        <th>Premium Expiry</th>
-                        <th>Games Played</th>
-                        <th>Last Active</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="usersTableBody">
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 30px;">
-                            <i class="fas fa-spinner fa-spin"></i> Loading users...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Codes Table -->
-        <div class="table-container">
-            <h2 class="panel-title" style="margin-bottom: 20px;">
-                <i class="fas fa-key"></i> PREMIUM CODES
-            </h2>
-            
-            <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-                <button class="admin-btn admin-btn-warning" onclick="filterCodes('all')">
-                    All Codes
-                </button>
-                <button class="admin-btn admin-btn-success" onclick="filterCodes('unused')">
-                    Unused
-                </button>
-                <button class="admin-btn admin-btn-danger" onclick="filterCodes('used')">
-                    Used
-                </button>
-                <button class="admin-btn" onclick="filterCodes('expired')">
-                    Expired
-                </button>
-            </div>
-            
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Code</th>
-                        <th>Status</th>
-                        <th>Duration</th>
-                        <th>Created</th>
-                        <th>Expires</th>
-                        <th>Used By</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="codesTableBody">
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 30px;">
-                            <i class="fas fa-spinner fa-spin"></i> Loading codes...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Payments Table -->
-        <div class="table-container">
-            <h2 class="panel-title" style="margin-bottom: 20px;">
-                <i class="fas fa-credit-card"></i> PAYMENT HISTORY
-            </h2>
-            
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Phone</th>
-                        <th>Amount</th>
-                        <th>Package</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="paymentsTableBody">
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 30px;">
-                            <i class="fas fa-spinner fa-spin"></i> Loading payments...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- System Tools -->
-        <div class="control-panel" style="margin-bottom: 50px;">
-            <h2 class="panel-title">
-                <i class="fas fa-tools"></i> SYSTEM TOOLS
-            </h2>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                <button class="admin-btn admin-btn-warning" onclick="clearExpiredCodes()">
-                    <i class="fas fa-trash"></i> Clear Expired Codes
-                </button>
-                
-                <button class="admin-btn admin-btn-danger" onclick="resetFreeTrials()">
-                    <i class="fas fa-redo"></i> Reset All Free Trials
-                </button>
-                
-                <button class="admin-btn" onclick="exportData()">
-                    <i class="fas fa-download"></i> Export Data
-                </button>
-                
-                <button class="admin-btn admin-btn-danger" onclick="showHarakaPayBalance()">
-                    <i class="fas fa-wallet"></i> Check Balance
-                </button>
             </div>
         </div>
     </div>
 
     <script>
-        // === FIREBASE CONFIGURATION ===
+        // ==================== FIREBASE CONFIGURATION ====================
         const firebaseConfig = {
             apiKey: "AIzaSyDtWAjmGIWVr3QGESAClBzRkQ5AZr5Zeys",
             authDomain: "stanybots.firebaseapp.com",
@@ -842,50 +782,16 @@
             measurementId: "G-W3C0C280BY"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const auth = firebase.auth();
 
-        // === GLOBAL VARIABLES ===
-        let adminAuthenticated = false;
-        let currentFilter = 'all';
-
-        // === ADMIN AUTHENTICATION ===
-        const ADMIN_PASSWORD = "admin123"; // Change this in production
-
-        function adminLogin() {
-            const password = document.getElementById('adminPassword').value;
-            
-            if (password === ADMIN_PASSWORD) {
-                adminAuthenticated = true;
-                document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-                showNotification('Login successful!', 'success');
-                loadDashboard();
-            } else {
-                showNotification('Invalid password!', 'error');
-            }
-        }
-
-        function adminLogout() {
-            adminAuthenticated = false;
-            document.getElementById('loginPage').style.display = 'flex';
-            document.getElementById('dashboard').style.display = 'none';
-            showNotification('Logged out successfully', 'success');
-        }
-
-        // === DASHBOARD FUNCTIONS ===
+        // ==================== UTILITY FUNCTIONS ====================
         function showLoading(show, text = 'LOADING...') {
             const loading = document.getElementById('loadingOverlay');
             const loadingText = document.getElementById('loadingText');
-            
             loadingText.textContent = text;
-            
-            if (show) {
-                loading.classList.add('active');
-            } else {
-                loading.classList.remove('active');
-            }
+            loading.classList.toggle('active', show);
         }
 
         function showNotification(message, type = 'success') {
@@ -893,148 +799,7 @@
             notification.textContent = message;
             notification.className = `notification ${type}`;
             notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        async function loadDashboard() {
-            showLoading(true, 'Loading dashboard...');
-            
-            try {
-                // Load app settings
-                await loadAppSettings();
-                
-                // Load stats
-                await loadStats();
-                
-                // Load tables
-                await loadUsersTable();
-                await loadCodesTable();
-                await loadPaymentsTable();
-                
-                // Update time
-                updateTime();
-                setInterval(updateTime, 60000);
-                
-                showNotification('Dashboard loaded successfully', 'success');
-                
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-                showNotification('Error loading dashboard', 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        function refreshData() {
-            loadDashboard();
-        }
-
-        function updateTime() {
-            const now = new Date();
-            const timeString = now.toLocaleString('en-US', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            
-            document.getElementById('currentTime').textContent = timeString;
-        }
-
-        // === APP SETTINGS ===
-        async function loadAppSettings() {
-            try {
-                const snapshot = await database.ref('appSettings').once('value');
-                
-                if (snapshot.exists()) {
-                    const settings = snapshot.val();
-                    
-                    // Update input fields
-                    document.getElementById('appNameInput').value = settings.appName || 'Mines Predictor';
-                    document.getElementById('whatsappInput').value = settings.whatsappNumber || '';
-                    document.getElementById('channelInput').value = settings.channelLink || '';
-                    document.getElementById('apiKeyInput').value = settings.apiKey || 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae';
-                    
-                    // Update header
-                    document.getElementById('adminAppName').textContent = (settings.appName || 'MINES PREDICTOR').toUpperCase() + ' ADMIN';
-                }
-                
-            } catch (error) {
-                console.error('Error loading app settings:', error);
-            }
-        }
-
-        async function saveAppSettings() {
-            showLoading(true, 'Saving settings...');
-            
-            try {
-                const settings = {
-                    appName: document.getElementById('appNameInput').value,
-                    whatsappNumber: document.getElementById('whatsappInput').value,
-                    channelLink: document.getElementById('channelInput').value,
-                    apiKey: document.getElementById('apiKeyInput').value,
-                    lastUpdated: Date.now(),
-                    updatedBy: 'admin'
-                };
-                
-                await database.ref('appSettings').set(settings);
-                
-                showNotification('Settings saved successfully!', 'success');
-                loadAppSettings();
-                
-            } catch (error) {
-                console.error('Error saving settings:', error);
-                showNotification('Error saving settings', 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        // === STATISTICS ===
-        async function loadStats() {
-            try {
-                // Load users
-                const usersSnapshot = await database.ref('users').once('value');
-                let totalUsers = 0;
-                let premiumUsers = 0;
-                let dailyActive = 0;
-                let totalRevenue = 0;
-                
-                const now = Date.now();
-                const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
-                
-                usersSnapshot.forEach(userSnap => {
-                    const user = userSnap.val();
-                    totalUsers++;
-                    
-                    if (user.isPremium && user.premiumExpiry && user.premiumExpiry > now) {
-                        premiumUsers++;
-                    }
-                    
-                    if (user.lastAccess && user.lastAccess > twentyFourHoursAgo) {
-                        dailyActive++;
-                    }
-                    
-                    if (user.amountPaid) {
-                        totalRevenue += parseInt(user.amountPaid) || 0;
-                    }
-                });
-                
-                // Update UI
-                document.getElementById('totalUsers').textContent = totalUsers;
-                document.getElementById('premiumUsers').textContent = premiumUsers;
-                document.getElementById('dailyActive').textContent = dailyActive;
-                document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
-                
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
+            setTimeout(() => notification.classList.remove('show'), 3000);
         }
 
         function formatCurrency(amount) {
@@ -1045,555 +810,596 @@
             }).format(amount);
         }
 
-        // === CODE GENERATION ===
-        async function generateCodes() {
-            showLoading(true, 'Generating codes...');
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            return new Date(timestamp).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // ==================== AUTHENTICATION ====================
+        const ADMIN_PASSWORD = "admin123";
+
+        function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                showNotification('Login successful!', 'success');
+                loadDashboard();
+            } else {
+                showNotification('Invalid password!', 'error');
+            }
+        }
+
+        function adminLogout() {
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('dashboard').style.display = 'none';
+            showNotification('Logged out successfully', 'success');
+        }
+
+        // ==================== DASHBOARD FUNCTIONS ====================
+        async function loadDashboard() {
+            showLoading(true, 'Loading dashboard...');
             
             try {
-                const count = parseInt(document.getElementById('codeCount').value);
-                const duration = parseInt(document.getElementById('codeDuration').value);
-                const prefix = document.getElementById('codePrefix').value.toUpperCase();
+                await loadStats();
+                await loadRecentActivity();
+                updateTime();
                 
-                let codes = [];
-                let codeList = '';
-                
-                for (let i = 0; i < count; i++) {
-                    const code = prefix + '-' + 
-                                 Math.random().toString(36).substr(2, 4).toUpperCase() + '-' +
-                                 Math.random().toString(36).substr(2, 4).toUpperCase();
-                    
-                    const codeData = {
-                        code: code,
-                        created: Date.now(),
-                        duration: duration,
-                        expiresAt: Date.now() + (duration * 24 * 60 * 60 * 1000),
-                        used: false,
-                        usedBy: null,
-                        usedAt: null
-                    };
-                    
-                    await database.ref('premiumCodes/' + code).set(codeData);
-                    
-                    codes.push(code);
-                    codeList += code + '\n';
-                }
-                
-                document.getElementById('generatedCodes').value = codeList;
-                showNotification(`Generated ${count} premium codes!`, 'success');
-                
-                // Reload codes table
-                loadCodesTable();
+                // Load initial tab
+                showTab('dashboardTab');
                 
             } catch (error) {
-                console.error('Error generating codes:', error);
-                showNotification('Error generating codes', 'error');
+                console.error('Dashboard error:', error);
+                showNotification('Error loading dashboard', 'error');
             } finally {
                 showLoading(false);
             }
         }
 
-        // === USERS TABLE ===
-        async function loadUsersTable() {
+        function refreshDashboard() {
+            loadDashboard();
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleString();
+            setTimeout(updateTime, 60000);
+        }
+
+        // ==================== STATISTICS ====================
+        async function loadStats() {
+            try {
+                // Load users
+                const usersSnapshot = await database.ref('users').once('value');
+                let totalUsers = 0;
+                let premiumUsers = 0;
+                let dailyActive = 0;
+                let totalRevenue = 0;
+                
+                const now = Date.now();
+                const oneDayAgo = now - (24 * 60 * 60 * 1000);
+                
+                usersSnapshot.forEach(userSnap => {
+                    totalUsers++;
+                    const user = userSnap.val();
+                    
+                    if (user.isPremium && user.premiumExpiry && user.premiumExpiry > now) {
+                        premiumUsers++;
+                    }
+                    
+                    if (user.lastAccess && user.lastAccess > oneDayAgo) {
+                        dailyActive++;
+                    }
+                    
+                    if (user.amountPaid) {
+                        totalRevenue += parseInt(user.amountPaid) || 0;
+                    }
+                });
+                
+                // Load payments
+                const paymentsSnapshot = await database.ref('payments').once('value');
+                paymentsSnapshot.forEach(paymentSnap => {
+                    const payment = paymentSnap.val();
+                    if (payment.status === 'completed' && payment.amount) {
+                        totalRevenue += parseInt(payment.amount) || 0;
+                    }
+                });
+                
+                // Update UI
+                document.getElementById('totalUsers').textContent = totalUsers;
+                document.getElementById('premiumUsers').textContent = premiumUsers;
+                document.getElementById('dailyActive').textContent = dailyActive;
+                document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+                
+            } catch (error) {
+                console.error('Stats error:', error);
+            }
+        }
+
+        async function loadRecentActivity() {
+            try {
+                const logsSnapshot = await database.ref('usageLogs').limitToLast(10).once('value');
+                let html = '';
+                
+                logsSnapshot.forEach(logSnap => {
+                    const log = logSnap.val();
+                    const time = formatDate(log.timestamp);
+                    const type = log.type || 'unknown';
+                    
+                    html += `
+                        <div style="margin-bottom: 8px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 5px;">
+                            <div style="font-size: 0.9rem;">${type.toUpperCase()}</div>
+                            <div style="font-size: 0.7rem; color: var(--admin-muted);">${time}</div>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('recentActivity').innerHTML = html || 'No recent activity';
+                
+            } catch (error) {
+                console.error('Activity error:', error);
+            }
+        }
+
+        // ==================== TAB MANAGEMENT ====================
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabId).style.display = 'block';
+            
+            // Add active class to clicked tab
+            event.currentTarget.classList.add('active');
+            
+            // Load tab data
+            switch(tabId) {
+                case 'usersTab':
+                    loadUsers();
+                    break;
+                case 'codesTab':
+                    loadCodes();
+                    break;
+                case 'resellersTab':
+                    loadResellers();
+                    break;
+                case 'paymentsTab':
+                    loadPayments();
+                    break;
+                case 'settingsTab':
+                    loadSettings();
+                    break;
+            }
+        }
+
+        // ==================== USERS MANAGEMENT ====================
+        async function loadUsers() {
+            showLoading(true, 'Loading users...');
+            
             try {
                 const snapshot = await database.ref('users').once('value');
                 const tbody = document.getElementById('usersTableBody');
-                tbody.innerHTML = '';
+                let html = '';
                 
-                if (!snapshot.exists()) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="6" style="text-align: center; padding: 30px;">
-                                <i class="fas fa-users-slash"></i> No users found
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-                
-                let index = 0;
                 snapshot.forEach(userSnap => {
                     const user = userSnap.val();
                     const deviceId = userSnap.key;
                     
-                    const row = document.createElement('tr');
-                    
-                    // Format premium expiry
-                    let premiumStatus = 'Free';
-                    let premiumClass = 'badge-warning';
-                    let expiryText = 'N/A';
+                    let status = 'Free';
+                    let statusClass = 'badge-warning';
+                    let expiry = 'N/A';
                     
                     if (user.isPremium) {
                         if (user.premiumExpiry && user.premiumExpiry > Date.now()) {
-                            premiumStatus = 'Premium';
-                            premiumClass = 'badge-success';
-                            expiryText = formatDate(user.premiumExpiry);
+                            status = 'Premium';
+                            statusClass = 'badge-success';
+                            const days = Math.ceil((user.premiumExpiry - Date.now()) / (1000 * 60 * 60 * 24));
+                            expiry = `${days} days`;
                         } else {
-                            premiumStatus = 'Expired';
-                            premiumClass = 'badge-danger';
-                            expiryText = 'Expired';
+                            status = 'Expired';
+                            statusClass = 'badge-danger';
+                            expiry = 'Expired';
                         }
                     }
                     
-                    // Format last active
-                    const lastActive = user.lastAccess ? 
-                        formatTimeAgo(user.lastAccess) : 'Never';
-                    
-                    row.innerHTML = `
-                        <td>
-                            <div style="font-family: monospace; font-size: 0.8rem; color: var(--admin-muted);">
-                                ${deviceId.substring(0, 12)}...
-                            </div>
-                            <small style="color: var(--admin-muted);">
-                                Created: ${user.createdAt ? formatDate(user.createdAt) : 'N/A'}
-                            </small>
-                        </td>
-                        <td>
-                            <span class="badge ${premiumClass}">${premiumStatus}</span>
-                        </td>
-                        <td>${expiryText}</td>
-                        <td>${user.stats?.gamesPlayed || 0}</td>
-                        <td>${lastActive}</td>
-                        <td>
-                            <button class="admin-btn admin-btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" 
-                                    onclick="deleteUser('${deviceId}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
+                    html += `
+                        <tr>
+                            <td style="font-family: monospace; font-size: 0.9rem;">${deviceId.substring(0, 12)}...</td>
+                            <td><span class="badge ${statusClass}">${status}</span></td>
+                            <td>${expiry}</td>
+                            <td>${user.gamesPlayed || 0}</td>
+                            <td>${user.lastAccess ? formatDate(user.lastAccess) : 'Never'}</td>
+                            <td>
+                                <button class="admin-btn admin-btn-danger btn-sm" onclick="deleteUser('${deviceId}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
                     `;
-                    
-                    tbody.appendChild(row);
-                    index++;
                 });
                 
+                tbody.innerHTML = html || '<tr><td colspan="6" style="text-align: center;">No users found</td></tr>';
+                
             } catch (error) {
-                console.error('Error loading users:', error);
-                document.getElementById('usersTableBody').innerHTML = `
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 30px; color: var(--admin-danger);">
-                            <i class="fas fa-exclamation-triangle"></i> Error loading users
-                        </td>
-                    </tr>
-                `;
+                console.error('Users error:', error);
+                document.getElementById('usersTableBody').innerHTML = 
+                    '<tr><td colspan="6" style="text-align: center; color: var(--admin-danger);">Error loading users</td></tr>';
+            } finally {
+                showLoading(false);
             }
         }
 
         async function deleteUser(deviceId) {
-            if (!confirm('Are you sure you want to delete this user?')) return;
+            if (!confirm('Delete this user?')) return;
             
             showLoading(true, 'Deleting user...');
             
             try {
                 await database.ref('users/' + deviceId).remove();
                 await database.ref('freeTrials/' + deviceId).remove();
-                
-                showNotification('User deleted successfully', 'success');
-                loadUsersTable();
+                showNotification('User deleted', 'success');
+                loadUsers();
                 loadStats();
-                
             } catch (error) {
-                console.error('Error deleting user:', error);
+                console.error('Delete error:', error);
                 showNotification('Error deleting user', 'error');
             } finally {
                 showLoading(false);
             }
         }
 
-        // === CODES TABLE ===
-        async function loadCodesTable() {
+        // ==================== CODES MANAGEMENT ====================
+        async function loadCodes() {
+            const filter = document.getElementById('codesFilter').value;
+            showLoading(true, 'Loading codes...');
+            
             try {
                 const snapshot = await database.ref('premiumCodes').once('value');
-                const tbody = document.getElementById('codesTableBody');
-                tbody.innerHTML = '';
+                let html = '';
+                const now = Date.now();
                 
-                if (!snapshot.exists()) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 30px;">
-                                <i class="fas fa-key"></i> No codes generated yet
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-                
-                let index = 0;
                 snapshot.forEach(codeSnap => {
-                    const codeData = codeSnap.val();
-                    const code = codeSnap.key;
+                    const code = codeSnap.val();
                     
                     // Apply filter
-                    const isUsed = codeData.used;
-                    const isExpired = codeData.expiresAt && codeData.expiresAt < Date.now();
+                    if (filter === 'unused' && code.used) return;
+                    if (filter === 'used' && !code.used) return;
+                    if (filter === 'expired' && (!code.expiresAt || code.expiresAt > now)) return;
                     
-                    if (currentFilter === 'unused' && (isUsed || isExpired)) return;
-                    if (currentFilter === 'used' && !isUsed) return;
-                    if (currentFilter === 'expired' && !isExpired) return;
+                    const status = code.used ? 'Used' : 'Available';
+                    const statusClass = code.used ? 'badge-danger' : 'badge-success';
+                    const expiry = code.expiresAt ? formatDate(code.expiresAt) : 'Never';
                     
-                    const row = document.createElement('tr');
-                    
-                    // Determine status
-                    let status = 'Unused';
-                    let statusClass = 'badge-success';
-                    
-                    if (isUsed) {
-                        status = 'Used';
-                        statusClass = 'badge-danger';
-                    } else if (isExpired) {
-                        status = 'Expired';
-                        statusClass = 'badge-warning';
-                    }
-                    
-                    // Format dates
-                    const createdDate = formatDate(codeData.created);
-                    const expiryDate = codeData.expiresAt ? formatDate(codeData.expiresAt) : 'Never';
-                    
-                    row.innerHTML = `
-                        <td>
-                            <strong style="font-family: var(--font-cyber); color: var(--admin-primary);">
-                                ${code}
-                            </strong>
-                        </td>
-                        <td>
-                            <span class="badge ${statusClass}">${status}</span>
-                        </td>
-                        <td>${codeData.duration || 0} days</td>
-                        <td>${createdDate}</td>
-                        <td>${expiryDate}</td>
-                        <td>
-                            ${codeData.usedBy ? 
-                                `<div style="font-family: monospace; font-size: 0.8rem;">
-                                    ${codeData.usedBy.substring(0, 8)}...
-                                </div>
-                                <small>${codeData.usedAt ? formatDate(codeData.usedAt) : ''}</small>` 
-                                : 'N/A'}
-                        </td>
-                        <td>
-                            <button class="admin-btn admin-btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" 
-                                    onclick="deleteCode('${code}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
+                    html += `
+                        <div style="margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-family: var(--font-cyber);">${codeSnap.key}</span>
+                                <span class="badge ${statusClass}">${status}</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--admin-muted); margin-top: 5px;">
+                                Expires: ${expiry} • Duration: ${code.duration || 0} days
+                            </div>
+                        </div>
                     `;
-                    
-                    tbody.appendChild(row);
-                    index++;
                 });
                 
-                // If no rows after filtering
-                if (tbody.children.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 30px;">
-                                <i class="fas fa-filter"></i> No codes match the filter
-                            </td>
-                        </tr>
-                    `;
-                }
+                document.getElementById('codesList').innerHTML = html || 'No codes found';
                 
             } catch (error) {
-                console.error('Error loading codes:', error);
-                document.getElementById('codesTableBody').innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--admin-danger);">
-                            <i class="fas fa-exclamation-triangle"></i> Error loading codes
-                        </td>
-                    </tr>
-                `;
-            }
-        }
-
-        function filterCodes(filter) {
-            currentFilter = filter;
-            loadCodesTable();
-        }
-
-        async function deleteCode(code) {
-            if (!confirm('Are you sure you want to delete this code?')) return;
-            
-            showLoading(true, 'Deleting code...');
-            
-            try {
-                await database.ref('premiumCodes/' + code).remove();
-                showNotification('Code deleted successfully', 'success');
-                loadCodesTable();
-                
-            } catch (error) {
-                console.error('Error deleting code:', error);
-                showNotification('Error deleting code', 'error');
+                console.error('Codes error:', error);
+                document.getElementById('codesList').innerHTML = 'Error loading codes';
             } finally {
                 showLoading(false);
             }
         }
 
-        // === PAYMENTS TABLE ===
-        async function loadPaymentsTable() {
+        async function generateCodes() {
+            const type = document.getElementById('codeType').value;
+            const count = parseInt(document.getElementById('codeCount').value);
+            const duration = parseInt(document.getElementById('codeDuration').value);
+            
+            if (!count || count < 1 || count > 1000) {
+                showNotification('Enter valid number (1-1000)', 'error');
+                return;
+            }
+            
+            if (!duration || duration < 1) {
+                showNotification('Enter valid duration', 'error');
+                return;
+            }
+            
+            showLoading(true, 'Generating codes...');
+            
+            try {
+                let codes = '';
+                
+                if (type === 'premium') {
+                    // Generate premium codes
+                    for (let i = 0; i < count; i++) {
+                        const code = 'PREM-' + 
+                                   Math.random().toString(36).substr(2, 4).toUpperCase() + '-' +
+                                   Math.random().toString(36).substr(2, 4).toUpperCase();
+                        
+                        const codeData = {
+                            code: code,
+                            created: Date.now(),
+                            duration: duration,
+                            expiresAt: Date.now() + (duration * 24 * 60 * 60 * 1000),
+                            used: false,
+                            type: 'premium'
+                        };
+                        
+                        await database.ref('premiumCodes/' + code).set(codeData);
+                        codes += code + '\n';
+                    }
+                    
+                } else if (type === 'reseller') {
+                    const limit = parseInt(document.getElementById('resellerLimit').value) || 100;
+                    
+                    // Generate reseller batch
+                    const batchId = 'BATCH_' + Date.now();
+                    
+                    for (let i = 0; i < count; i++) {
+                        const code = 'RES-' + 
+                                   Math.random().toString(36).substr(2, 4).toUpperCase() + '-' +
+                                   Math.random().toString(36).substr(2, 4).toUpperCase();
+                        
+                        const codeData = {
+                            code: code,
+                            created: Date.now(),
+                            duration: duration,
+                            expiresAt: Date.now() + (duration * 24 * 60 * 60 * 1000),
+                            used: false,
+                            type: 'reseller',
+                            batchId: batchId,
+                            limit: limit
+                        };
+                        
+                        await database.ref('premiumCodes/' + code).set(codeData);
+                        codes += code + '\n';
+                    }
+                    
+                    // Create reseller batch record
+                    await database.ref('resellerBatches/' + batchId).set({
+                        count: count,
+                        duration: duration,
+                        limit: limit,
+                        created: Date.now(),
+                        used: 0
+                    });
+                }
+                
+                document.getElementById('generatedCodes').value = codes;
+                showNotification(`${count} ${type} codes generated!`, 'success');
+                loadCodes();
+                
+            } catch (error) {
+                console.error('Generate error:', error);
+                showNotification('Error generating codes', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ==================== RESELLERS MANAGEMENT ====================
+        async function loadResellers() {
+            showLoading(true, 'Loading resellers...');
+            
+            try {
+                const snapshot = await database.ref('resellers').once('value');
+                const tbody = document.getElementById('resellersTableBody');
+                let html = '';
+                
+                snapshot.forEach(resellerSnap => {
+                    const reseller = resellerSnap.val();
+                    const id = resellerSnap.key;
+                    
+                    html += `
+                        <tr>
+                            <td>${id}</td>
+                            <td>${reseller.name || 'N/A'}</td>
+                            <td>${reseller.email || 'N/A'}</td>
+                            <td>${reseller.totalCodes || 0}</td>
+                            <td>${reseller.usedCodes || 0}</td>
+                            <td>${formatCurrency(reseller.totalEarnings || 0)}</td>
+                            <td><span class="badge badge-success">Active</span></td>
+                            <td>
+                                <button class="admin-btn admin-btn-danger btn-sm" onclick="deleteReseller('${id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html || '<tr><td colspan="8" style="text-align: center;">No resellers found</td></tr>';
+                
+            } catch (error) {
+                console.error('Resellers error:', error);
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--admin-danger);">Error loading resellers</td></tr>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ==================== PAYMENTS MANAGEMENT ====================
+        async function loadPayments() {
+            showLoading(true, 'Loading payments...');
+            
             try {
                 const snapshot = await database.ref('payments').once('value');
                 const tbody = document.getElementById('paymentsTableBody');
-                tbody.innerHTML = '';
+                let html = '';
                 
-                if (!snapshot.exists()) {
-                    tbody.innerHTML = `
+                snapshot.forEach(paymentSnap => {
+                    const payment = paymentSnap.val();
+                    const id = paymentSnap.key;
+                    
+                    const status = payment.status || 'pending';
+                    const statusClass = status === 'completed' ? 'badge-success' : 
+                                     status === 'failed' ? 'badge-danger' : 'badge-warning';
+                    
+                    html += `
                         <tr>
-                            <td colspan="7" style="text-align: center; padding: 30px;">
-                                <i class="fas fa-credit-card"></i> No payments yet
+                            <td style="font-family: monospace; font-size: 0.9rem;">${id.substring(0, 10)}...</td>
+                            <td>${payment.phone || 'N/A'}</td>
+                            <td>${formatCurrency(payment.amount || 0)}</td>
+                            <td>${payment.package || 'N/A'}</td>
+                            <td><span class="badge ${statusClass}">${status.toUpperCase()}</span></td>
+                            <td>${payment.created ? formatDate(payment.created) : 'N/A'}</td>
+                            <td>
+                                <button class="admin-btn btn-sm" onclick="checkPayment('${id}')">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
                             </td>
                         </tr>
                     `;
-                    return;
-                }
-                
-                let totalAmount = 0;
-                snapshot.forEach(paymentSnap => {
-                    const payment = paymentSnap.val();
-                    totalAmount += payment.amount || 0;
-                    
-                    const row = document.createElement('tr');
-                    
-                    // Determine status
-                    let status = payment.status || 'pending';
-                    let statusClass = status === 'completed' ? 'badge-success' : 
-                                     status === 'failed' ? 'badge-danger' : 'badge-warning';
-                    
-                    row.innerHTML = `
-                        <td>
-                            <div style="font-family: monospace; font-size: 0.8rem;">
-                                ${payment.orderId || paymentSnap.key}
-                            </div>
-                        </td>
-                        <td>${payment.phone || 'N/A'}</td>
-                        <td>
-                            <strong style="color: var(--admin-success);">
-                                ${formatCurrency(payment.amount || 0)}
-                            </strong>
-                        </td>
-                        <td>${payment.package || 'N/A'}</td>
-                        <td>
-                            <span class="badge ${statusClass}">${status.toUpperCase()}</span>
-                        </td>
-                        <td>${payment.createdAt ? formatDate(payment.createdAt) : 'N/A'}</td>
-                        <td>
-                            <button class="admin-btn" style="padding: 5px 10px; font-size: 0.8rem;" 
-                                    onclick="checkPaymentStatus('${payment.orderId || paymentSnap.key}')">
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
-                        </td>
-                    `;
-                    
-                    tbody.appendChild(row);
                 });
                 
-                // Update total revenue in stats
-                document.getElementById('totalRevenue').textContent = formatCurrency(totalAmount);
+                tbody.innerHTML = html || '<tr><td colspan="7" style="text-align: center;">No payments found</td></tr>';
                 
             } catch (error) {
-                console.error('Error loading payments:', error);
-                document.getElementById('paymentsTableBody').innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--admin-danger);">
-                            <i class="fas fa-exclamation-triangle"></i> Error loading payments
-                        </td>
-                    </tr>
-                `;
-            }
-        }
-
-        async function checkPaymentStatus(orderId) {
-            showLoading(true, 'Checking payment status...');
-            
-            try {
-                const apiKey = document.getElementById('apiKeyInput').value;
-                
-                const response = await fetch(`https://harakapay.net/api/v1/status/${orderId}`, {
-                    headers: {
-                        'X-API-Key': apiKey
-                    }
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    await database.ref('payments/' + orderId).update({
-                        status: result.payment.status,
-                        checkedAt: Date.now()
-                    });
-                    
-                    showNotification(`Payment status: ${result.payment.status}`, 'success');
-                    loadPaymentsTable();
-                    
-                } else {
-                    showNotification('Error checking payment status', 'error');
-                }
-                
-            } catch (error) {
-                console.error('Error checking payment:', error);
-                showNotification('Network error', 'error');
+                console.error('Payments error:', error);
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--admin-danger);">Error loading payments</td></tr>';
             } finally {
                 showLoading(false);
             }
         }
 
-        // === SYSTEM TOOLS ===
+        // ==================== SETTINGS MANAGEMENT ====================
+        async function loadSettings() {
+            try {
+                const snapshot = await database.ref('appSettings').once('value');
+                
+                if (snapshot.exists()) {
+                    const settings = snapshot.val();
+                    document.getElementById('appName').value = settings.appName || '';
+                    document.getElementById('whatsappNumber').value = settings.whatsappNumber || '';
+                    document.getElementById('channelLink').value = settings.channelLink || '';
+                    document.getElementById('apiKey').value = settings.apiKey || 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae';
+                }
+            } catch (error) {
+                console.error('Settings error:', error);
+            }
+        }
+
+        async function saveSettings() {
+            showLoading(true, 'Saving settings...');
+            
+            try {
+                const settings = {
+                    appName: document.getElementById('appName').value,
+                    whatsappNumber: document.getElementById('whatsappNumber').value,
+                    channelLink: document.getElementById('channelLink').value,
+                    apiKey: document.getElementById('apiKey').value,
+                    updated: Date.now()
+                };
+                
+                await database.ref('appSettings').set(settings);
+                
+                // Update admin password if provided
+                const newPass = document.getElementById('adminPass').value;
+                if (newPass) {
+                    // In production, you should hash this password
+                    // For now, we'll just store it (not secure for production)
+                    await database.ref('adminPassword').set(newPass);
+                    document.getElementById('adminPass').value = '';
+                }
+                
+                showNotification('Settings saved!', 'success');
+                document.getElementById('adminTitle').textContent = (settings.appName || 'STANY MINES PRO') + ' ADMIN';
+                
+            } catch (error) {
+                console.error('Save error:', error);
+                showNotification('Error saving settings', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ==================== SYSTEM TOOLS ====================
         async function clearExpiredCodes() {
-            if (!confirm('Clear all expired codes? This cannot be undone.')) return;
+            if (!confirm('Clear all expired codes?')) return;
             
             showLoading(true, 'Clearing expired codes...');
             
             try {
                 const snapshot = await database.ref('premiumCodes').once('value');
                 const now = Date.now();
-                let clearedCount = 0;
+                let cleared = 0;
                 
                 snapshot.forEach(codeSnap => {
-                    const codeData = codeSnap.val();
+                    const code = codeSnap.val();
                     
-                    if (codeData.expiresAt && codeData.expiresAt < now && !codeData.used) {
+                    if (code.expiresAt && code.expiresAt < now && !code.used) {
                         database.ref('premiumCodes/' + codeSnap.key).remove();
-                        clearedCount++;
+                        cleared++;
                     }
                 });
                 
-                showNotification(`Cleared ${clearedCount} expired codes`, 'success');
-                loadCodesTable();
+                showNotification(`Cleared ${cleared} expired codes`, 'success');
+                loadCodes();
                 
             } catch (error) {
-                console.error('Error clearing codes:', error);
+                console.error('Clear error:', error);
                 showNotification('Error clearing codes', 'error');
             } finally {
                 showLoading(false);
             }
         }
 
-        async function resetFreeTrials() {
-            if (!confirm('Reset all free trials? All users will get 2 free trials again.')) return;
-            
-            showLoading(true, 'Resetting free trials...');
-            
-            try {
-                const snapshot = await database.ref('freeTrials').once('value');
-                
-                snapshot.forEach(trialSnap => {
-                    database.ref('freeTrials/' + trialSnap.key).update({
-                        used: 0,
-                        lastReset: Date.now(),
-                        lastUsed: []
-                    });
-                });
-                
-                showNotification('All free trials have been reset', 'success');
-                
-            } catch (error) {
-                console.error('Error resetting trials:', error);
-                showNotification('Error resetting trials', 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        function exportData() {
-            showLoading(true, 'Preparing export...');
-            
-            setTimeout(() => {
-                // Create export data
-                const exportDate = new Date().toISOString().split('T')[0];
-                const exportData = {
-                    exportDate: exportDate,
-                    timestamp: Date.now(),
-                    note: 'Mines Predictor Data Export'
-                };
-                
-                // Convert to JSON string
-                const dataStr = JSON.stringify(exportData, null, 2);
-                const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-                
-                // Create download link
-                const exportFileDefaultName = `mines-predictor-export-${exportDate}.json`;
-                const linkElement = document.createElement('a');
-                linkElement.setAttribute('href', dataUri);
-                linkElement.setAttribute('download', exportFileDefaultName);
-                linkElement.click();
-                
-                showNotification('Export started', 'success');
-                showLoading(false);
-            }, 1000);
-        }
-
-        async function showHarakaPayBalance() {
+        async function checkHarakaPayBalance() {
             showLoading(true, 'Checking balance...');
             
             try {
-                const apiKey = document.getElementById('apiKeyInput').value;
+                const snapshot = await database.ref('appSettings/apiKey').once('value');
+                const apiKey = snapshot.val() || 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae';
                 
-                const response = await fetch('https://harakapay.net/api/v1/balance', {
-                    headers: {
-                        'X-API-Key': apiKey
-                    }
+                const response = await fetch('https://harakaapay.net/api/v1/balance', {
+                    headers: { 'X-API-Key': apiKey }
                 });
                 
                 const result = await response.json();
                 
                 if (result.success) {
-                    const message = `Wallet: ${formatCurrency(result.wallet_balance)}\nFloat: ${formatCurrency(result.float_balance)}`;
-                    alert(`HarakaPay Balance:\n\n${message}`);
+                    alert(`HarakaPay Balance:\n\nWallet: ${formatCurrency(result.wallet_balance)}\nFloat: ${formatCurrency(result.float_balance)}`);
                 } else {
                     showNotification('Error checking balance', 'error');
                 }
                 
             } catch (error) {
-                console.error('Error checking balance:', error);
+                console.error('Balance error:', error);
                 showNotification('Network error', 'error');
             } finally {
                 showLoading(false);
             }
         }
 
-        // === UTILITY FUNCTIONS ===
-        function formatDate(timestamp) {
-            if (!timestamp) return 'N/A';
+        // ==================== INITIALIZATION ====================
+        function initializeAdmin() {
+            updateTime();
             
-            const date = new Date(timestamp);
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
+            // Code type toggle
+            document.getElementById('codeType').addEventListener('change', function() {
+                document.getElementById('resellerSettings').style.display = 
+                    this.value === 'reseller' ? 'block' : 'none';
             });
         }
 
-        function formatTimeAgo(timestamp) {
-            if (!timestamp) return 'Never';
-            
-            const now = Date.now();
-            const diff = now - timestamp;
-            
-            const minutes = Math.floor(diff / (1000 * 60));
-            const hours = Math.floor(diff / (1000 * 60 * 60));
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            
-            if (minutes < 60) {
-                return `${minutes}m ago`;
-            } else if (hours < 24) {
-                return `${hours}h ago`;
-            } else {
-                return `${days}d ago`;
-            }
-        }
-
-        // === INITIALIZATION ===
-        function initializeAdmin() {
-            // Check if already logged in
-            const savedLogin = localStorage.getItem('adminLoggedIn');
-            if (savedLogin === 'true') {
-                adminAuthenticated = true;
-                document.getElementById('loginPage').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-                loadDashboard();
-            }
-            
-            // Update time
-            updateTime();
-        }
-
-        // Initialize when page loads
         window.addEventListener('DOMContentLoaded', initializeAdmin);
     </script>
 </body>
