@@ -149,6 +149,18 @@
             background: linear-gradient(135deg, var(--admin-warning), #ff9900);
         }
 
+        .login-error {
+            color: var(--admin-danger);
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+        }
+
         /* === ADMIN PANEL === */
         .admin-panel {
             display: none;
@@ -719,10 +731,19 @@
                     <label for="adminPassword"><i class="fas fa-lock"></i> Password</label>
                     <input type="password" id="adminPassword" class="admin-input" placeholder="••••••••" required>
                 </div>
+                <div class="login-error" id="loginError"></div>
                 <button type="submit" class="admin-btn">
                     <i class="fas fa-sign-in-alt"></i> LOGIN
                 </button>
             </form>
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="admin-btn admin-btn-warning" onclick="createDefaultAdmin()" style="font-size: 0.9rem; padding: 10px;">
+                    <i class="fas fa-user-plus"></i> Create Default Admin
+                </button>
+                <p style="color: var(--admin-text-muted); font-size: 0.8rem; margin-top: 10px;">
+                    Use this if first time setup
+                </p>
+            </div>
         </div>
     </div>
 
@@ -1230,10 +1251,10 @@
         };
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-        const analytics = firebase.analytics();
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+        const auth = firebase.auth(app);
+        const analytics = firebase.analytics(app);
 
         // ==================== GLOBAL VARIABLES ====================
         let currentAdmin = null;
@@ -1246,6 +1267,7 @@
         const adminPanel = document.getElementById('adminPanel');
         const loginForm = document.getElementById('loginForm');
         const logoutBtn = document.getElementById('logoutBtn');
+        const loginError = document.getElementById('loginError');
 
         // ==================== INITIALIZATION ====================
         document.addEventListener('DOMContentLoaded', () => {
@@ -1257,10 +1279,16 @@
             // Check if admin is already logged in
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
-                    currentAdmin = user;
-                    await loadAdminData(user.uid);
-                    showAdminPanel();
-                    showNotification('Welcome back!', 'success');
+                    try {
+                        currentAdmin = user;
+                        await loadAdminData(user.uid);
+                        showAdminPanel();
+                        showNotification('Welcome back!', 'success');
+                    } catch (error) {
+                        console.error('Error loading admin data:', error);
+                        await auth.signOut();
+                        showLoginPage();
+                    }
                 } else {
                     showLoginPage();
                 }
@@ -1273,29 +1301,78 @@
             const email = document.getElementById('adminEmail').value;
             const password = document.getElementById('adminPassword').value;
 
+            if (!email || !password) {
+                showLoginError('Please enter both email and password');
+                return;
+            }
+
             showLoading();
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
-                // Check if user is admin
-                const adminDoc = await db.collection('admins').doc(user.uid).get();
+                // Check if user is admin by checking if they exist in admin settings
+                const adminDoc = await db.collection('settings').doc('admin').get();
+                
                 if (adminDoc.exists) {
+                    const adminSettings = adminDoc.data();
+                    if (adminSettings.email === email || adminSettings.admins && adminSettings.admins.includes(email)) {
+                        currentAdmin = user;
+                        await loadAdminData(user.uid);
+                        showAdminPanel();
+                        showNotification('Login successful!', 'success');
+                        return;
+                    }
+                }
+                
+                // If no admin settings exist, check if this is the first login
+                const adminsCollection = await db.collection('admins').where('email', '==', email).get();
+                if (!adminsCollection.empty) {
                     currentAdmin = user;
-                    adminData = adminDoc.data();
+                    await loadAdminData(user.uid);
                     showAdminPanel();
                     showNotification('Login successful!', 'success');
-                } else {
-                    await auth.signOut();
-                    showNotification('Access denied. Admin privileges required.', 'error');
+                    return;
                 }
+                
+                // If we get here, the user is not authorized as admin
+                await auth.signOut();
+                showLoginError('Access denied. Admin privileges required.');
             } catch (error) {
                 console.error('Login error:', error);
-                showNotification(error.message, 'error');
+                let errorMessage = 'Login failed. Please try again.';
+                
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessage = 'No admin account found with this email.';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Incorrect password. Please try again.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Invalid email address.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = 'This account has been disabled.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Too many failed attempts. Please try again later.';
+                        break;
+                }
+                
+                showLoginError(errorMessage);
             } finally {
                 hideLoading();
             }
         });
+
+        function showLoginError(message) {
+            loginError.textContent = message;
+            loginError.classList.add('show');
+            setTimeout(() => {
+                loginError.classList.remove('show');
+            }, 5000);
+        }
 
         // Logout
         logoutBtn.addEventListener('click', async () => {
@@ -1314,17 +1391,109 @@
                 const adminDoc = await db.collection('admins').doc(uid).get();
                 if (adminDoc.exists) {
                     adminData = adminDoc.data();
-                    document.getElementById('userName').textContent = adminData.name || 'Admin';
-                    document.getElementById('userEmail').textContent = currentAdmin.email;
-                    document.getElementById('userAvatar').textContent = adminData.name?.charAt(0) || 'A';
-                    
-                    // Update last login
-                    await db.collection('admins').doc(uid).update({
+                } else {
+                    // Create admin document if it doesn't exist
+                    adminData = {
+                        name: 'Admin',
+                        email: currentAdmin.email,
+                        role: 'super_admin',
+                        createdAt: new Date(),
                         lastLogin: new Date()
-                    });
+                    };
+                    await db.collection('admins').doc(uid).set(adminData);
                 }
+                
+                document.getElementById('userName').textContent = adminData.name || 'Admin';
+                document.getElementById('userEmail').textContent = currentAdmin.email;
+                document.getElementById('userAvatar').textContent = (adminData.name?.charAt(0) || 'A').toUpperCase();
+                
+                // Update last login
+                await db.collection('admins').doc(uid).update({
+                    lastLogin: new Date()
+                });
             } catch (error) {
                 console.error('Error loading admin data:', error);
+                throw error;
+            }
+        }
+
+        // ==================== FIRST TIME SETUP ====================
+        async function createDefaultAdmin() {
+            const email = 'admin@stanybots.com';
+            const password = 'Admin@123';
+            
+            showLoading('Creating default admin account...');
+            
+            try {
+                // Check if admin already exists
+                const existingAdmins = await db.collection('admins').limit(1).get();
+                
+                if (!existingAdmins.empty) {
+                    showNotification('Admin already exists. Please use the login form.', 'warning');
+                    hideLoading();
+                    return;
+                }
+                
+                // Create admin user
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Create admin document
+                const adminData = {
+                    name: 'Administrator',
+                    email: email,
+                    role: 'super_admin',
+                    createdAt: new Date(),
+                    lastLogin: new Date()
+                };
+                
+                await db.collection('admins').doc(user.uid).set(adminData);
+                
+                // Create admin settings
+                const adminSettings = {
+                    email: email,
+                    admins: [email],
+                    createdAt: new Date()
+                };
+                
+                await db.collection('settings').doc('admin').set(adminSettings);
+                
+                // Create default app settings
+                const appSettings = {
+                    appName: 'STANY MINES PREDICTOR',
+                    whatsappNumber: '255000000000',
+                    channelLink: 'https://whatsapp.com/channel/0029Vb72cVkJ3jv10gzqTn18',
+                    apiKey: 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae',
+                    price7Days: 3000,
+                    price30Days: 10000,
+                    freeTrialCount: 2,
+                    resellerCommission: 20,
+                    updatedAt: new Date(),
+                    updatedBy: user.uid
+                };
+                
+                await db.collection('settings').doc('app').set(appSettings);
+                
+                hideLoading();
+                
+                // Auto-fill login form
+                document.getElementById('adminEmail').value = email;
+                document.getElementById('adminPassword').value = password;
+                
+                showNotification('Default admin created successfully! Email: admin@stanybots.com, Password: Admin@123', 'success');
+                alert('Default admin account created!\n\nEmail: admin@stanybots.com\nPassword: Admin@123\n\nPlease save these credentials and change the password immediately after login.');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Error creating default admin:', error);
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    showNotification('Admin account already exists. Please use the login form.', 'warning');
+                    document.getElementById('adminEmail').value = 'admin@stanybots.com';
+                    document.getElementById('adminPassword').focus();
+                } else {
+                    showNotification('Error creating admin: ' + error.message, 'error');
+                }
             }
         }
 
@@ -1332,6 +1501,8 @@
         function showLoginPage() {
             loginPage.style.display = 'flex';
             adminPanel.style.display = 'none';
+            // Clear password field
+            document.getElementById('adminPassword').value = '';
         }
 
         function showAdminPanel() {
@@ -2353,11 +2524,15 @@
 
         // ==================== UTILITY FUNCTIONS ====================
         function showLoading(message) {
+            if (message) {
+                loadingOverlay.innerHTML = `<div class="loader"></div><div style="margin-top: 20px; color: var(--admin-text);">${message}</div>`;
+            }
             loadingOverlay.classList.add('active');
         }
 
         function hideLoading() {
             loadingOverlay.classList.remove('active');
+            loadingOverlay.innerHTML = '<div class="loader"></div>';
         }
 
         function showNotification(message, type) {
@@ -2420,62 +2595,6 @@
                 hideLoading();
             }
         }
-
-        // ==================== INITIAL ADMIN SETUP ====================
-        // This function should be run once to create the first admin
-        async function setupFirstAdmin() {
-            const adminEmail = prompt('Enter admin email:');
-            const adminPassword = prompt('Enter admin password:');
-            const adminName = prompt('Enter admin name:');
-            
-            if (!adminEmail || !adminPassword || !adminName) {
-                alert('All fields are required!');
-                return;
-            }
-            
-            showLoading('Creating admin account...');
-            
-            try {
-                // Create auth user
-                const userCredential = await auth.createUserWithEmailAndPassword(adminEmail, adminPassword);
-                const user = userCredential.user;
-                
-                // Create admin document
-                await db.collection('admins').doc(user.uid).set({
-                    email: adminEmail,
-                    name: adminName,
-                    role: 'super_admin',
-                    createdAt: new Date(),
-                    lastLogin: new Date()
-                });
-                
-                // Create default settings
-                await db.collection('settings').doc('app').set({
-                    appName: 'STANY MINES PREDICTOR',
-                    whatsappNumber: '255000000000',
-                    channelLink: 'https://whatsapp.com/channel/0029Vb72cVkJ3jv10gzqTn18',
-                    apiKey: 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae',
-                    price7Days: 3000,
-                    price30Days: 10000,
-                    freeTrialCount: 2,
-                    resellerCommission: 20,
-                    updatedAt: new Date(),
-                    updatedBy: user.uid
-                });
-                
-                hideLoading();
-                alert(`Admin account created successfully!\n\nEmail: ${adminEmail}\nPassword: ${adminPassword}\n\nPlease save these credentials!`);
-                location.reload();
-                
-            } catch (error) {
-                hideLoading();
-                console.error('Error creating admin:', error);
-                alert('Error creating admin: ' + error.message);
-            }
-        }
-
-        // Uncomment and run this function once to create the first admin
-        // setupFirstAdmin();
     </script>
 </body>
 </html>
