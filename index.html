@@ -279,6 +279,7 @@
             border-radius: var(--radius);
             overflow: hidden;
             backdrop-filter: blur(5px);
+            margin-bottom: 30px;
         }
 
         .table-header {
@@ -569,6 +570,27 @@
             float: right;
         }
 
+        /* Action Buttons */
+        .action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            font-family: var(--font-cyber);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .action-view {
+            background: var(--neon-blue);
+            color: #000;
+        }
+
+        .action-delete {
+            background: var(--neon-red);
+            color: white;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -666,8 +688,8 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-bolt"></i></div>
-                    <div class="stat-value" id="activePredictions">0</div>
-                    <div class="stat-label">Today's Predictions</div>
+                    <div class="stat-value" id="todayPredictions">0</div>
+                    <div class="stat-label">Today Predictions</div>
                 </div>
             </div>
 
@@ -688,14 +710,21 @@
                 <button class="tab-btn" onclick="showTab('resellers')">
                     <i class="fas fa-user-tie"></i> Resellers
                 </button>
+                <button class="tab-btn" onclick="showTab('settings')">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
             </div>
 
-            <!-- Tab Contents -->
+            <!-- USERS TAB -->
             <div id="usersTab" class="tab-content active">
                 <div class="data-table">
                     <div class="table-header">
                         <div class="table-title">
-                            <i class="fas fa-users"></i> REGISTERED USERS
+                            <i class="fas fa-users"></i> ALL USERS
+                            <div style="margin-left: auto; font-size: 0.8rem; color: var(--text-muted);">
+                                <i class="fas fa-search"></i> 
+                                <input type="text" id="userSearch" placeholder="Search users..." style="margin-left: 10px; padding: 5px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; border-radius: 5px;">
+                            </div>
                         </div>
                     </div>
                     <div class="table-body">
@@ -712,6 +741,7 @@
                                     <th>Package</th>
                                     <th>Expires</th>
                                     <th>Last Active</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="usersList">
@@ -722,11 +752,24 @@
                 </div>
             </div>
 
+            <!-- CODES TAB -->
             <div id="codesTab" class="tab-content">
                 <div class="data-table">
                     <div class="table-header">
                         <div class="table-title">
                             <i class="fas fa-key"></i> ALL CODES
+                            <div style="margin-left: auto; display: flex; gap: 10px;">
+                                <select id="codeFilter" style="padding: 5px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; border-radius: 5px;">
+                                    <option value="all">All Codes</option>
+                                    <option value="active">Active Only</option>
+                                    <option value="used">Used Only</option>
+                                    <option value="premium">Premium Codes</option>
+                                    <option value="reseller">Reseller Codes</option>
+                                </select>
+                                <button class="action-btn action-view" onclick="filterCodes()">
+                                    <i class="fas fa-filter"></i> Filter
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="table-body">
@@ -744,6 +787,7 @@
                                     <th>Used By</th>
                                     <th>Created</th>
                                     <th>Expires</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="codesList">
@@ -754,11 +798,15 @@
                 </div>
             </div>
 
+            <!-- PAYMENTS TAB -->
             <div id="paymentsTab" class="tab-content">
                 <div class="data-table">
                     <div class="table-header">
                         <div class="table-title">
                             <i class="fas fa-credit-card"></i> PAYMENT HISTORY
+                            <div style="margin-left: auto; font-size: 0.8rem; color: var(--text-muted);">
+                                Total: <span id="totalPaymentsCount">0</span> | Amount: <span id="totalPaymentsAmount">0 TZS</span>
+                            </div>
                         </div>
                     </div>
                     <div class="table-body">
@@ -786,6 +834,7 @@
                 </div>
             </div>
 
+            <!-- CREATE CODE TAB -->
             <div id="createCodeTab" class="tab-content">
                 <div class="form-group">
                     <div class="form-title">
@@ -837,6 +886,11 @@
                                 <option value="false">No (Multiple devices)</option>
                             </select>
                         </div>
+                        
+                        <div class="form-control">
+                            <label><i class="fas fa-user"></i> ASSIGN TO USER (Optional)</label>
+                            <input type="text" id="assignUser" placeholder="Username to assign code">
+                        </div>
                     </div>
                     
                     <button class="generate-btn" onclick="generateCodes()">
@@ -854,11 +908,15 @@
                 </div>
             </div>
 
+            <!-- RESELLERS TAB -->
             <div id="resellersTab" class="tab-content">
                 <div class="data-table">
                     <div class="table-header">
                         <div class="table-title">
                             <i class="fas fa-user-tie"></i> RESELLERS MANAGEMENT
+                            <button class="action-btn action-view" onclick="refreshResellers()" style="margin-left: auto;">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
                         </div>
                     </div>
                     <div class="table-body">
@@ -875,13 +933,89 @@
                                     <th>Used Codes</th>
                                     <th>Expires</th>
                                     <th>Status</th>
-                                    <th>Action</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="resellersList">
                                 <!-- Resellers will be loaded here -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS TAB -->
+            <div id="settingsTab" class="tab-content">
+                <div class="form-group">
+                    <div class="form-title">
+                        <i class="fas fa-cog"></i> SYSTEM SETTINGS
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-control">
+                            <label><i class="fas fa-gift"></i> FREE TRIALS PER DAY</label>
+                            <input type="number" id="freeTrialsPerDay" value="2" min="1" max="10">
+                        </div>
+                        
+                        <div class="form-control">
+                            <label><i class="fas fa-clock"></i> FREE TRIAL DURATION (Hours)</label>
+                            <input type="number" id="freeTrialHours" value="2" min="1" max="24">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-control">
+                            <label><i class="fas fa-money-bill-wave"></i> WEEKLY PRICE (TZS)</label>
+                            <input type="number" id="weeklyPrice" value="3000" min="1000" max="10000">
+                        </div>
+                        
+                        <div class="form-control">
+                            <label><i class="fas fa-money-bill-wave"></i> MONTHLY PRICE (TZS)</label>
+                            <input type="number" id="monthlyPrice" value="4000" min="1000" max="20000">
+                        </div>
+                        
+                        <div class="form-control">
+                            <label><i class="fas fa-money-bill-wave"></i> LIFETIME PRICE (TZS)</label>
+                            <input type="number" id="lifetimePrice" value="5000" min="1000" max="50000">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-control">
+                            <label><i class="fas fa-key"></i> HARAKAPAY API KEY</label>
+                            <input type="text" id="harakapayApiKey" value="hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae">
+                        </div>
+                        
+                        <div class="form-control">
+                            <label><i class="fas fa-phone"></i> WHATSAPP NUMBER</label>
+                            <input type="text" id="whatsappNumber" value="255XXXXXXXXX" placeholder="255XXXXXXXXX">
+                        </div>
+                    </div>
+                    
+                    <button class="generate-btn" onclick="saveSettings()">
+                        <i class="fas fa-save"></i> SAVE SETTINGS
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <div class="form-title">
+                        <i class="fas fa-database"></i> DATABASE MANAGEMENT
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-control">
+                            <label><i class="fas fa-trash"></i> CLEAR EXPIRED DATA</label>
+                            <button class="action-btn action-delete" onclick="clearExpiredData()" style="width: 100%; padding: 12px;">
+                                <i class="fas fa-trash-alt"></i> Clear Expired Users & Codes
+                            </button>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label><i class="fas fa-download"></i> EXPORT DATA</label>
+                            <button class="action-btn action-view" onclick="exportData()" style="width: 100%; padding: 12px;">
+                                <i class="fas fa-file-export"></i> Export All Data (CSV)
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -895,26 +1029,29 @@
     </div>
 
     <script>
-        // Firebase Configuration
+        // Firebase Configuration - YOUR CONFIG
         const firebaseConfig = {
-            apiKey: "AIzaSyB0B5H5gJ8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8Z8",
-            authDomain: "stany-mines-pro.firebaseapp.com",
-            projectId: "stany-mines-pro",
-            storageBucket: "stany-mines-pro.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:1234567890abcdef"
+            apiKey: "AIzaSyDtWAjmGIWVr3QGESAClBzRkQ5AZr5Zeys",
+            authDomain: "stanybots.firebaseapp.com",
+            projectId: "stanybots",
+            storageBucket: "stanybots.firebasestorage.app",
+            messagingSenderId: "381983533939",
+            appId: "1:381983533939:web:201157399592c6389df306",
+            measurementId: "G-W3C0C280BY"
         };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Admin credentials (In production, use Firebase Authentication)
+        // Admin credentials
         const ADMIN_CREDENTIALS = {
             username: "admin",
             password: "StanyMines2026!"
         };
+
+        // HarakaPay API Key
+        const HARAKA_API_KEY = "hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae";
 
         let adminLoggedIn = false;
         let statsListener = null;
@@ -923,6 +1060,27 @@
         let paymentsListener = null;
         let resellersListener = null;
 
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for saved admin session
+            const savedAdmin = localStorage.getItem('stany_admin');
+            if (savedAdmin) {
+                const adminData = JSON.parse(savedAdmin);
+                if (adminData.expiry > Date.now()) {
+                    document.getElementById('adminUsername').value = adminData.username;
+                    document.getElementById('adminPassword').focus();
+                }
+            }
+            
+            // Setup event listeners
+            document.getElementById('codeDuration').addEventListener('change', toggleCodeOptions);
+            document.getElementById('codeType').addEventListener('change', toggleCodeOptions);
+            document.getElementById('userSearch').addEventListener('input', searchUsers);
+            
+            // Initial toggle
+            toggleCodeOptions();
+        });
+
         // Login Function
         function loginAdmin() {
             const username = document.getElementById('adminUsername').value.trim();
@@ -930,6 +1088,14 @@
 
             if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
                 adminLoggedIn = true;
+                
+                // Save session
+                const sessionData = {
+                    username: username,
+                    expiry: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+                };
+                localStorage.setItem('stany_admin', JSON.stringify(sessionData));
+                
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
                 document.getElementById('adminName').textContent = username;
@@ -937,7 +1103,10 @@
                 // Initialize dashboard
                 loadStats();
                 showTab('users');
-                showMessage('Welcome Admin! Dashboard loaded.');
+                showMessage('Welcome Admin! Dashboard loaded.', 'success');
+                
+                // Load settings
+                loadSettings();
             } else {
                 showMessage('Invalid credentials. Please try again.', 'error');
             }
@@ -960,7 +1129,8 @@
                 document.getElementById('adminUsername').value = '';
                 document.getElementById('adminPassword').value = '';
                 
-                showMessage('Logged out successfully.');
+                localStorage.removeItem('stany_admin');
+                showMessage('Logged out successfully.', 'info');
             }
         }
 
@@ -983,11 +1153,20 @@
                 });
                 document.getElementById('totalRevenue').textContent = totalRevenue.toLocaleString() + ' TZS';
 
-                // Get active codes
+                // Get active codes (not used and not expired)
+                const now = Date.now();
                 const codesSnapshot = await db.collection('codes')
                     .where('used', '==', false)
                     .get();
-                document.getElementById('activeCodes').textContent = codesSnapshot.size;
+                
+                let activeCodes = 0;
+                codesSnapshot.forEach(doc => {
+                    const code = doc.data();
+                    if (!code.expiry || code.expiry > now) {
+                        activeCodes++;
+                    }
+                });
+                document.getElementById('activeCodes').textContent = activeCodes;
 
                 // Get today's predictions
                 const today = new Date();
@@ -995,7 +1174,7 @@
                 const predictionsSnapshot = await db.collection('predictions')
                     .where('timestamp', '>=', today)
                     .get();
-                document.getElementById('activePredictions').textContent = predictionsSnapshot.size;
+                document.getElementById('todayPredictions').textContent = predictionsSnapshot.size;
 
             } catch (error) {
                 console.error('Error loading stats:', error);
@@ -1033,6 +1212,9 @@
                 case 'resellers':
                     loadResellers();
                     break;
+                case 'settings':
+                    loadSettings();
+                    break;
             }
         }
 
@@ -1045,9 +1227,10 @@
             table.style.display = 'none';
 
             try {
-                // Set up real-time listener
+                // Remove previous listener
                 if (usersListener) usersListener();
                 
+                // Set up real-time listener
                 usersListener = db.collection('users')
                     .orderBy('lastActive', 'desc')
                     .onSnapshot(snapshot => {
@@ -1058,9 +1241,9 @@
                             const user = doc.data();
                             const row = document.createElement('tr');
                             
-                            // Calculate time ago
-                            const lastActive = user.lastActive?.toDate();
-                            const timeAgo = lastActive ? getTimeAgo(lastActive) : 'Never';
+                            // Format last active
+                            const lastActive = user.lastActive?.toDate ? user.lastActive.toDate() : new Date(user.lastActive || Date.now());
+                            const timeAgo = getTimeAgo(lastActive);
                             
                             // Status badge
                             let statusBadge = '<span class="status-badge status-free">FREE</span>';
@@ -1068,6 +1251,8 @@
                                 statusBadge = '<span class="status-badge status-premium">PREMIUM</span>';
                             } else if (user.status === 'reseller') {
                                 statusBadge = '<span class="status-badge" style="background:linear-gradient(45deg, var(--neon-pink), #cc00ff)">RESELLER</span>';
+                            } else if (user.status === 'pending') {
+                                statusBadge = '<span class="status-badge" style="background:var(--text-muted)">PENDING</span>';
                             }
                             
                             // Expiry display
@@ -1081,13 +1266,24 @@
                                 }
                             }
                             
+                            // Device ID shortened
+                            const shortDeviceId = user.deviceId ? user.deviceId.substring(0, 8) + '...' : 'N/A';
+                            
                             row.innerHTML = `
                                 <td><strong>${user.username}</strong></td>
-                                <td><small>${user.deviceId?.substring(0, 8)}...</small></td>
+                                <td><small title="${user.deviceId || 'N/A'}">${shortDeviceId}</small></td>
                                 <td>${statusBadge}</td>
                                 <td>${user.package || 'N/A'}</td>
                                 <td>${expiryText}</td>
                                 <td>${timeAgo}</td>
+                                <td>
+                                    <button class="action-btn action-view" onclick="viewUser('${user.username}')" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="action-btn action-delete" onclick="deleteUser('${user.username}')" title="Delete User">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
                             `;
                             
                             usersList.appendChild(row);
@@ -1102,6 +1298,21 @@
                 showMessage('Error loading users', 'error');
                 loading.style.display = 'none';
             }
+        }
+
+        // Search Users
+        function searchUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#usersList tr');
+            
+            rows.forEach(row => {
+                const username = row.cells[0].textContent.toLowerCase();
+                if (username.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         }
 
         // Load Codes
@@ -1125,12 +1336,17 @@
                             const code = doc.data();
                             const row = document.createElement('tr');
                             
-                            // Status
-                            let status = '<span class="status-badge status-active">ACTIVE</span>';
+                            // Determine status
+                            const now = Date.now();
+                            let status = 'ACTIVE';
+                            let statusClass = 'status-active';
+                            
                             if (code.used) {
-                                status = '<span class="status-badge status-expired">USED</span>';
-                            } else if (code.expiry && code.expiry < Date.now()) {
-                                status = '<span class="status-badge status-expired">EXPIRED</span>';
+                                status = 'USED';
+                                statusClass = 'status-expired';
+                            } else if (code.expiry && code.expiry < now) {
+                                status = 'EXPIRED';
+                                statusClass = 'status-expired';
                             }
                             
                             // Type badge
@@ -1145,26 +1361,35 @@
                                 duration = code.durationDays + ' days';
                             }
                             
-                            // Expiry date
+                            // Dates
+                            let createdDate = 'N/A';
+                            if (code.createdAt) {
+                                createdDate = code.createdAt.toDate ? 
+                                    code.createdAt.toDate().toLocaleDateString() : 
+                                    new Date(code.createdAt).toLocaleDateString();
+                            }
+                            
                             let expiryDate = 'N/A';
                             if (code.expiry) {
                                 expiryDate = new Date(code.expiry).toLocaleDateString();
-                            }
-                            
-                            // Created date
-                            let createdDate = 'N/A';
-                            if (code.createdAt) {
-                                createdDate = code.createdAt.toDate().toLocaleDateString();
                             }
                             
                             row.innerHTML = `
                                 <td><strong>${doc.id}</strong></td>
                                 <td>${typeBadge}</td>
                                 <td>${duration}</td>
-                                <td>${status}</td>
+                                <td><span class="status-badge ${statusClass}">${status}</span></td>
                                 <td>${code.usedBy || 'Not used'}</td>
                                 <td>${createdDate}</td>
                                 <td>${expiryDate}</td>
+                                <td>
+                                    <button class="action-btn action-view" onclick="copyCode('${doc.id}')" title="Copy Code">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <button class="action-btn action-delete" onclick="deleteCode('${doc.id}')" title="Delete Code">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
                             `;
                             
                             codesList.appendChild(row);
@@ -1179,6 +1404,37 @@
                 showMessage('Error loading codes', 'error');
                 loading.style.display = 'none';
             }
+        }
+
+        // Filter Codes
+        function filterCodes() {
+            const filterValue = document.getElementById('codeFilter').value;
+            const rows = document.querySelectorAll('#codesList tr');
+            const now = Date.now();
+            
+            rows.forEach(row => {
+                const type = row.cells[1].textContent.toLowerCase();
+                const status = row.cells[3].textContent;
+                
+                let show = true;
+                
+                switch(filterValue) {
+                    case 'active':
+                        show = status.includes('ACTIVE');
+                        break;
+                    case 'used':
+                        show = status.includes('USED');
+                        break;
+                    case 'premium':
+                        show = type.includes('premium');
+                        break;
+                    case 'reseller':
+                        show = type.includes('reseller');
+                        break;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
         }
 
         // Load Payments
@@ -1197,10 +1453,18 @@
                     .onSnapshot(snapshot => {
                         const paymentsList = document.getElementById('paymentsList');
                         paymentsList.innerHTML = '';
+                        
+                        let totalCount = 0;
+                        let totalAmount = 0;
 
                         snapshot.forEach(doc => {
+                            totalCount++;
                             const payment = doc.data();
                             const row = document.createElement('tr');
+                            
+                            // Amount
+                            const amount = payment.amount || 0;
+                            totalAmount += amount;
                             
                             // Status
                             let status = '<span class="status-badge status-active">COMPLETED</span>';
@@ -1211,14 +1475,16 @@
                             // Date
                             let date = 'N/A';
                             if (payment.timestamp) {
-                                date = payment.timestamp.toDate().toLocaleString();
+                                date = payment.timestamp.toDate ? 
+                                    payment.timestamp.toDate().toLocaleString() : 
+                                    new Date(payment.timestamp).toLocaleString();
                             }
                             
                             row.innerHTML = `
                                 <td><small>${payment.orderId || 'N/A'}</small></td>
                                 <td>${payment.username || 'Unknown'}</td>
                                 <td>${payment.phone || 'N/A'}</td>
-                                <td><strong>${(payment.amount || 0).toLocaleString()} TZS</strong></td>
+                                <td><strong>${amount.toLocaleString()} TZS</strong></td>
                                 <td>${payment.package || 'N/A'}</td>
                                 <td>${status}</td>
                                 <td>${date}</td>
@@ -1226,6 +1492,10 @@
                             
                             paymentsList.appendChild(row);
                         });
+
+                        // Update totals
+                        document.getElementById('totalPaymentsCount').textContent = totalCount;
+                        document.getElementById('totalPaymentsAmount').textContent = totalAmount.toLocaleString() + ' TZS';
 
                         loading.style.display = 'none';
                         table.style.display = 'table';
@@ -1251,11 +1521,11 @@
                 
                 resellersListener = db.collection('users')
                     .where('status', '==', 'reseller')
-                    .onSnapshot(snapshot => {
+                    .onSnapshot(async snapshot => {
                         const resellersList = document.getElementById('resellersList');
                         resellersList.innerHTML = '';
 
-                        snapshot.forEach(async doc => {
+                        for (const doc of snapshot.docs) {
                             const reseller = doc.data();
                             const row = document.createElement('tr');
                             
@@ -1287,15 +1557,17 @@
                                 <td>${expiryDate}</td>
                                 <td>${status}</td>
                                 <td>
-                                    <button onclick="viewResellerCodes('${reseller.resellerCode}')" 
-                                            style="background:var(--neon-blue); border:none; padding:5px 10px; border-radius:5px; color:white; cursor:pointer;">
-                                        <i class="fas fa-eye"></i> View Codes
+                                    <button class="action-btn action-view" onclick="viewResellerCodes('${reseller.resellerCode}')" title="View Codes">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="action-btn action-delete" onclick="deleteReseller('${reseller.username}')" title="Delete Reseller">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
                             `;
                             
                             resellersList.appendChild(row);
-                        });
+                        }
 
                         loading.style.display = 'none';
                         table.style.display = 'table';
@@ -1311,18 +1583,19 @@
         // Toggle Code Options
         function toggleCodeOptions() {
             const codeType = document.getElementById('codeType').value;
-            const codeLimitContainer = document.getElementById('codeLimitContainer');
+            const duration = document.getElementById('codeDuration').value;
             
+            const codeLimitContainer = document.getElementById('codeLimitContainer');
+            const customDaysContainer = document.getElementById('customDaysContainer');
+            
+            // Show/hide code limit for reseller
             if (codeType === 'reseller') {
                 codeLimitContainer.style.display = 'block';
             } else {
                 codeLimitContainer.style.display = 'none';
             }
             
-            // Show/hide custom days based on duration selection
-            const duration = document.getElementById('codeDuration').value;
-            const customDaysContainer = document.getElementById('customDaysContainer');
-            
+            // Show/hide custom days
             if (duration === 'custom') {
                 customDaysContainer.style.display = 'block';
             } else {
@@ -1336,6 +1609,7 @@
             const duration = document.getElementById('codeDuration').value;
             const quantity = parseInt(document.getElementById('codeQuantity').value) || 1;
             const deviceLock = document.getElementById('deviceLock').value === 'true';
+            const assignUser = document.getElementById('assignUser').value.trim();
             
             let days = 7; // Default week
             
@@ -1367,11 +1641,11 @@
             
             try {
                 for (let i = 0; i < quantity; i++) {
-                    // Generate random code
-                    const code = generateRandomCode();
+                    // Generate random code in STANY-XXXXXXXX format
+                    const code = 'STANY-' + generateRandomString(8);
                     
-                    // Save to Firestore
-                    await db.collection('codes').doc(code).set({
+                    // Code data
+                    const codeData = {
                         type: codeType,
                         duration: duration === 'custom' ? `${days} days` : duration,
                         durationDays: days,
@@ -1380,8 +1654,17 @@
                         maxCodes: maxCodes,
                         used: false,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        createdBy: ADMIN_CREDENTIALS.username
-                    });
+                        createdBy: 'admin',
+                        createdFor: assignUser || null
+                    };
+                    
+                    // If assigned to user, mark it
+                    if (assignUser) {
+                        codeData.assignedTo = assignUser;
+                    }
+                    
+                    // Save to Firestore
+                    await db.collection('codes').doc(code).set(codeData);
                     
                     // Create code card
                     const codeCard = document.createElement('div');
@@ -1395,7 +1678,7 @@
                                 #${i+1}
                             </div>
                         </div>
-                        <div class="code-value" onclick="copyToClipboard('${code}')">
+                        <div class="code-value" onclick="copyCode('${code}')">
                             ${code}
                         </div>
                         <div class="code-details">
@@ -1421,6 +1704,12 @@
                                 <span class="detail-value">${maxCodes}</span>
                             </div>
                             ` : ''}
+                            ${assignUser ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Assigned To:</span>
+                                <span class="detail-value">${assignUser}</span>
+                            </div>
+                            ` : ''}
                         </div>
                     `;
                     
@@ -1433,20 +1722,140 @@
                 // Refresh codes list
                 loadCodes();
                 
+                // Clear form
+                document.getElementById('assignUser').value = '';
+                
             } catch (error) {
                 console.error('Error generating codes:', error);
-                showMessage('Error generating codes', 'error');
+                showMessage('Error generating codes: ' + error.message, 'error');
             }
         }
 
-        // Generate Random Code
-        function generateRandomCode() {
+        // Generate Random String
+        function generateRandomString(length) {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let code = 'STANY-';
-            for (let i = 0; i < 8; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            return code;
+            return result;
+        }
+
+        // Copy Code
+        function copyCode(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                showMessage(`Code copied to clipboard: ${code}`, 'success');
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                showMessage('Failed to copy code', 'error');
+            });
+        }
+
+        // View User Details
+        async function viewUser(username) {
+            try {
+                const userDoc = await db.collection('users').doc(username).get();
+                if (!userDoc.exists) {
+                    showMessage('User not found', 'error');
+                    return;
+                }
+                
+                const user = userDoc.data();
+                let message = `<h3 style="color:var(--neon-blue); margin-bottom:15px;">User Details: ${username}</h3>`;
+                message += `<div style="text-align:left; line-height:1.6;">`;
+                
+                // Basic info
+                message += `<p><strong>Status:</strong> <span style="color:var(--neon-green)">${user.status || 'N/A'}</span></p>`;
+                message += `<p><strong>Device ID:</strong> ${user.deviceId || 'N/A'}</p>`;
+                
+                // Package info
+                if (user.package) {
+                    message += `<p><strong>Package:</strong> ${user.package}</p>`;
+                }
+                
+                // Expiry
+                if (user.expiry) {
+                    const expiryDate = new Date(user.expiry);
+                    const now = new Date();
+                    const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                    message += `<p><strong>Expires:</strong> ${expiryDate.toLocaleDateString()} (${daysLeft} days left)</p>`;
+                }
+                
+                // Reseller info
+                if (user.status === 'reseller') {
+                    message += `<p><strong>Reseller Code:</strong> ${user.resellerCode || 'N/A'}</p>`;
+                    message += `<p><strong>Max Codes:</strong> ${user.maxCodes || 0}</p>`;
+                    message += `<p><strong>Generated Codes:</strong> ${user.generatedCodes || 0}</p>`;
+                }
+                
+                // Predictions
+                if (user.predictionsLeft !== undefined) {
+                    message += `<p><strong>Predictions Left:</strong> ${user.predictionsLeft}</p>`;
+                }
+                if (user.usedPredictions !== undefined) {
+                    message += `<p><strong>Used Predictions:</strong> ${user.usedPredictions}</p>`;
+                }
+                
+                // Last active
+                if (user.lastActive) {
+                    const lastActive = user.lastActive.toDate ? 
+                        user.lastActive.toDate().toLocaleString() : 
+                        new Date(user.lastActive).toLocaleString();
+                    message += `<p><strong>Last Active:</strong> ${lastActive}</p>`;
+                }
+                
+                // Joined date
+                if (user.joinedAt) {
+                    const joinedDate = user.joinedAt.toDate ? 
+                        user.joinedAt.toDate().toLocaleDateString() : 
+                        new Date(user.joinedAt).toLocaleDateString();
+                    message += `<p><strong>Joined:</strong> ${joinedDate}</p>`;
+                }
+                
+                message += `</div>`;
+                
+                // Add action buttons
+                message += `<div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">`;
+                message += `<button class="action-btn action-view" onclick="resetUserPredictions('${username}')" style="padding:8px 15px;">Reset Predictions</button>`;
+                message += `<button class="action-btn action-delete" onclick="extendUserAccess('${username}')" style="padding:8px 15px;">Extend Access</button>`;
+                message += `</div>`;
+                
+                showMessage(message, 'info');
+                
+            } catch (error) {
+                console.error('Error viewing user:', error);
+                showMessage('Error loading user details', 'error');
+            }
+        }
+
+        // Delete User
+        async function deleteUser(username) {
+            if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                await db.collection('users').doc(username).delete();
+                showMessage(`User "${username}" deleted successfully`, 'success');
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showMessage('Error deleting user', 'error');
+            }
+        }
+
+        // Delete Code
+        async function deleteCode(code) {
+            if (!confirm(`Are you sure you want to delete code "${code}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                await db.collection('codes').doc(code).delete();
+                showMessage(`Code "${code}" deleted successfully`, 'success');
+            } catch (error) {
+                console.error('Error deleting code:', error);
+                showMessage('Error deleting code', 'error');
+            }
         }
 
         // View Reseller Codes
@@ -1462,15 +1871,32 @@
                 if (codesSnapshot.empty) {
                     message += '<p>No codes generated yet.</p>';
                 } else {
-                    message += '<table style="width:100%; border-collapse:collapse;">';
-                    message += '<tr><th style="padding:8px; border-bottom:1px solid var(--glass-border);">Code</th><th style="padding:8px; border-bottom:1px solid var(--glass-border);">Status</th><th style="padding:8px; border-bottom:1px solid var(--glass-border);">Used By</th></tr>';
+                    message += '<table style="width:100%; border-collapse:collapse; font-size:0.9rem;">';
+                    message += '<tr style="background:rgba(0,0,0,0.2);">';
+                    message += '<th style="padding:8px; border-bottom:1px solid var(--glass-border);">Code</th>';
+                    message += '<th style="padding:8px; border-bottom:1px solid var(--glass-border);">Status</th>';
+                    message += '<th style="padding:8px; border-bottom:1px solid var(--glass-border);">Used By</th>';
+                    message += '<th style="padding:8px; border-bottom:1px solid var(--glass-border);">Created</th>';
+                    message += '</tr>';
                     
                     codesSnapshot.forEach(doc => {
                         const code = doc.data();
+                        let createdDate = 'N/A';
+                        if (code.createdAt) {
+                            createdDate = code.createdAt.toDate ? 
+                                code.createdAt.toDate().toLocaleDateString() : 
+                                new Date(code.createdAt).toLocaleDateString();
+                        }
+                        
                         message += `<tr>
                             <td style="padding:8px; border-bottom:1px solid var(--glass-border);">${doc.id}</td>
-                            <td style="padding:8px; border-bottom:1px solid var(--glass-border);">${code.used ? 'Used' : 'Active'}</td>
+                            <td style="padding:8px; border-bottom:1px solid var(--glass-border);">
+                                <span style="color:${code.used ? 'var(--neon-red)' : 'var(--neon-green)'}">
+                                    ${code.used ? 'Used' : 'Active'}
+                                </span>
+                            </td>
                             <td style="padding:8px; border-bottom:1px solid var(--glass-border);">${code.usedBy || 'Not used'}</td>
+                            <td style="padding:8px; border-bottom:1px solid var(--glass-border);">${createdDate}</td>
                         </tr>`;
                     });
                     
@@ -1486,17 +1912,241 @@
             }
         }
 
-        // Copy to Clipboard
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showMessage(`Code copied to clipboard: ${text}`, 'success');
-            }).catch(err => {
-                console.error('Copy failed:', err);
-                showMessage('Failed to copy code', 'error');
-            });
+        // Delete Reseller
+        async function deleteReseller(username) {
+            if (!confirm(`Are you sure you want to delete reseller "${username}"? This will also delete all their generated codes.`)) {
+                return;
+            }
+            
+            try {
+                // Get reseller data first
+                const resellerDoc = await db.collection('users').doc(username).get();
+                if (!resellerDoc.exists) {
+                    showMessage('Reseller not found', 'error');
+                    return;
+                }
+                
+                const reseller = resellerDoc.data();
+                
+                // Delete all codes generated by this reseller
+                const codesSnapshot = await db.collection('codes')
+                    .where('generatedBy', '==', reseller.resellerCode)
+                    .get();
+                
+                const batch = db.batch();
+                codesSnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                
+                // Delete reseller user
+                batch.delete(db.collection('users').doc(username));
+                
+                await batch.commit();
+                showMessage(`Reseller "${username}" and all their codes deleted successfully`, 'success');
+                
+            } catch (error) {
+                console.error('Error deleting reseller:', error);
+                showMessage('Error deleting reseller', 'error');
+            }
         }
 
-        // Get Time Ago
+        // Load Settings
+        async function loadSettings() {
+            try {
+                const settingsDoc = await db.collection('settings').doc('system').get();
+                if (settingsDoc.exists) {
+                    const settings = settingsDoc.data();
+                    
+                    document.getElementById('freeTrialsPerDay').value = settings.freeTrialsPerDay || 2;
+                    document.getElementById('freeTrialHours').value = settings.freeTrialHours || 2;
+                    document.getElementById('weeklyPrice').value = settings.weeklyPrice || 3000;
+                    document.getElementById('monthlyPrice').value = settings.monthlyPrice || 4000;
+                    document.getElementById('lifetimePrice').value = settings.lifetimePrice || 5000;
+                    document.getElementById('harakapayApiKey').value = settings.harakapayApiKey || HARAKA_API_KEY;
+                    document.getElementById('whatsappNumber').value = settings.whatsappNumber || '255XXXXXXXXX';
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        // Save Settings
+        async function saveSettings() {
+            try {
+                const settings = {
+                    freeTrialsPerDay: parseInt(document.getElementById('freeTrialsPerDay').value) || 2,
+                    freeTrialHours: parseInt(document.getElementById('freeTrialHours').value) || 2,
+                    weeklyPrice: parseInt(document.getElementById('weeklyPrice').value) || 3000,
+                    monthlyPrice: parseInt(document.getElementById('monthlyPrice').value) || 4000,
+                    lifetimePrice: parseInt(document.getElementById('lifetimePrice').value) || 5000,
+                    harakapayApiKey: document.getElementById('harakapayApiKey').value.trim(),
+                    whatsappNumber: document.getElementById('whatsappNumber').value.trim(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('settings').doc('system').set(settings, { merge: true });
+                showMessage('Settings saved successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showMessage('Error saving settings', 'error');
+            }
+        }
+
+        // Clear Expired Data
+        async function clearExpiredData() {
+            if (!confirm('Are you sure you want to clear all expired data? This action cannot be undone.')) {
+                return;
+            }
+            
+            showMessage('Clearing expired data...', 'info');
+            
+            try {
+                const now = Date.now();
+                const batch = db.batch();
+                let count = 0;
+                
+                // Clear expired users
+                const usersSnapshot = await db.collection('users').get();
+                usersSnapshot.forEach(doc => {
+                    const user = doc.data();
+                    if (user.expiry && user.expiry < now && user.status !== 'reseller') {
+                        batch.delete(doc.ref);
+                        count++;
+                    }
+                });
+                
+                // Clear expired codes
+                const codesSnapshot = await db.collection('codes').get();
+                codesSnapshot.forEach(doc => {
+                    const code = doc.data();
+                    if (code.expiry && code.expiry < now) {
+                        batch.delete(doc.ref);
+                        count++;
+                    }
+                });
+                
+                await batch.commit();
+                showMessage(`Cleared ${count} expired records successfully!`, 'success');
+                
+                // Refresh data
+                loadUsers();
+                loadCodes();
+                loadStats();
+                
+            } catch (error) {
+                console.error('Error clearing expired data:', error);
+                showMessage('Error clearing expired data', 'error');
+            }
+        }
+
+        // Export Data
+        async function exportData() {
+            showMessage('Preparing data export...', 'info');
+            
+            try {
+                // Get all data
+                const [usersSnapshot, codesSnapshot, paymentsSnapshot] = await Promise.all([
+                    db.collection('users').get(),
+                    db.collection('codes').get(),
+                    db.collection('payments').get()
+                ]);
+                
+                // Convert to CSV
+                let csv = 'Data Type,Username/Code,Status,Expiry,Created\n';
+                
+                // Users
+                usersSnapshot.forEach(doc => {
+                    const user = doc.data();
+                    const expiry = user.expiry ? new Date(user.expiry).toLocaleDateString() : 'N/A';
+                    const created = user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : 'N/A';
+                    csv += `USER,${doc.id},${user.status},${expiry},${created}\n`;
+                });
+                
+                // Codes
+                codesSnapshot.forEach(doc => {
+                    const code = doc.data();
+                    const expiry = code.expiry ? new Date(code.expiry).toLocaleDateString() : 'N/A';
+                    const created = code.createdAt ? new Date(code.createdAt).toLocaleDateString() : 'N/A';
+                    csv += `CODE,${doc.id},${code.used ? 'USED' : 'ACTIVE'},${expiry},${created}\n`;
+                });
+                
+                // Payments
+                paymentsSnapshot.forEach(doc => {
+                    const payment = doc.data();
+                    const date = payment.timestamp ? new Date(payment.timestamp).toLocaleDateString() : 'N/A';
+                    csv += `PAYMENT,${payment.orderId},${payment.status},${payment.amount} TZS,${date}\n`;
+                });
+                
+                // Create download link
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `stany-mines-data-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showMessage('Data exported successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showMessage('Error exporting data', 'error');
+            }
+        }
+
+        // Refresh Resellers
+        function refreshResellers() {
+            loadResellers();
+            showMessage('Resellers list refreshed', 'info');
+        }
+
+        // Reset User Predictions
+        async function resetUserPredictions(username) {
+            try {
+                await db.collection('users').doc(username).update({
+                    usedPredictions: 0,
+                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showMessage(`Predictions reset for ${username}`, 'success');
+            } catch (error) {
+                console.error('Error resetting predictions:', error);
+                showMessage('Error resetting predictions', 'error');
+            }
+        }
+
+        // Extend User Access
+        async function extendUserAccess(username) {
+            const days = prompt('Enter number of days to extend:', '30');
+            if (!days || isNaN(days) || days < 1) return;
+            
+            try {
+                const userDoc = await db.collection('users').doc(username).get();
+                if (!userDoc.exists) {
+                    showMessage('User not found', 'error');
+                    return;
+                }
+                
+                const user = userDoc.data();
+                const currentExpiry = user.expiry || Date.now();
+                const newExpiry = new Date(currentExpiry).getTime() + (parseInt(days) * 24 * 60 * 60 * 1000);
+                
+                await db.collection('users').doc(username).update({
+                    expiry: newExpiry,
+                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showMessage(`Access extended by ${days} days for ${username}`, 'success');
+                
+            } catch (error) {
+                console.error('Error extending access:', error);
+                showMessage('Error extending access', 'error');
+            }
+        }
+
+        // Utility Functions
         function getTimeAgo(date) {
             const seconds = Math.floor((new Date() - date) / 1000);
             
@@ -1519,7 +2169,6 @@
             const messageBox = document.getElementById('messageBox');
             const messageContent = document.getElementById('messageContent');
             
-            // Set color based on type
             let color = 'var(--neon-blue)';
             if (type === 'error') color = 'var(--neon-red)';
             else if (type === 'success') color = 'var(--neon-green)';
@@ -1528,41 +2177,11 @@
             messageContent.innerHTML = `<div style="color:${color};">${message}</div>`;
             messageBox.classList.add('show');
             
-            // Auto hide after 5 seconds
             setTimeout(hideMessage, 5000);
         }
 
         function hideMessage() {
             document.getElementById('messageBox').classList.remove('show');
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check for saved admin session
-            const savedAdmin = localStorage.getItem('stany_admin');
-            if (savedAdmin) {
-                const adminData = JSON.parse(savedAdmin);
-                if (adminData.expiry > Date.now()) {
-                    document.getElementById('adminUsername').value = adminData.username;
-                    showMessage('Session found. Enter password to continue.', 'info');
-                }
-            }
-            
-            // Setup event listeners
-            document.getElementById('codeDuration').addEventListener('change', toggleCodeOptions);
-            document.getElementById('codeType').addEventListener('change', toggleCodeOptions);
-            
-            // Initial toggle
-            toggleCodeOptions();
-        });
-
-        // Save admin session
-        function saveAdminSession() {
-            const session = {
-                username: ADMIN_CREDENTIALS.username,
-                expiry: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-            };
-            localStorage.setItem('stany_admin', JSON.stringify(session));
         }
     </script>
 </body>
