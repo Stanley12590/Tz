@@ -6,11 +6,1425 @@
     <title>Mines Predictor - Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"></script>
+    <!-- Firebase SDK (Modular Version) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, getDoc, getDocs, query, where, orderBy, limit, writeBatch, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateEmail, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+
+        // ==================== FIREBASE CONFIGURATION ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDtWAjmGIWVr3QGESAClBzRkQ5AZr5Zeys",
+            authDomain: "stanybots.firebaseapp.com",
+            projectId: "stanybots",
+            storageBucket: "stanybots.firebasestorage.app",
+            messagingSenderId: "381983533939",
+            appId: "1:381983533939:web:201157399592c6389df306",
+            measurementId: "G-W3C0C280BY"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const analytics = getAnalytics(app);
+
+        // ==================== GLOBAL VARIABLES ====================
+        let currentAdmin = null;
+        let adminData = null;
+
+        // ==================== DOM ELEMENTS ====================
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const notification = document.getElementById('notification');
+        const loginPage = document.getElementById('loginPage');
+        const adminPanel = document.getElementById('adminPanel');
+        const loginForm = document.getElementById('loginForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const loginError = document.getElementById('loginError');
+
+        // ==================== ADMIN FUNCTIONS ====================
+        // Kucreate admin
+        async function createAdmin(uid, adminData) {
+            try {
+                await setDoc(doc(db, "admins", uid), {
+                    email: adminData.email,
+                    name: adminData.name,
+                    role: adminData.role || "super_admin",
+                    createdAt: Timestamp.now(),
+                    lastLogin: Timestamp.now()
+                });
+                console.log("Admin created successfully:", uid);
+                return true;
+            } catch (error) {
+                console.error("Error creating admin:", error);
+                return false;
+            }
+        }
+
+        // Kucreate reseller na auto-generated ID
+        async function createReseller(resellerData, adminUID) {
+            try {
+                // Create reseller with custom ID
+                const resellerId = 'RES_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4).toUpperCase();
+                
+                await setDoc(doc(db, "resellers", resellerId), {
+                    name: resellerData.name,
+                    email: resellerData.email,
+                    phone: resellerData.phone,
+                    commission: resellerData.commission || 20,
+                    totalCodes: resellerData.totalCodes || 100,
+                    codesUsed: 0,
+                    revenue: 0,
+                    createdAt: Timestamp.now(),
+                    createdBy: adminUID,
+                    resellerId: resellerId
+                });
+                
+                console.log("Reseller created successfully:", resellerId);
+                return resellerId;
+            } catch (error) {
+                console.error("Error creating reseller:", error);
+                return null;
+            }
+        }
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            initAdmin();
+        });
+
+        // ==================== AUTHENTICATION ====================
+        async function initAdmin() {
+            // Check if admin is already logged in
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    try {
+                        currentAdmin = user;
+                        await loadAdminData(user.uid);
+                        showAdminPanel();
+                        showNotification('Welcome back!', 'success');
+                    } catch (error) {
+                        console.error('Error loading admin data:', error);
+                        await signOut(auth);
+                        showLoginPage();
+                    }
+                } else {
+                    showLoginPage();
+                }
+            });
+        }
+
+        // Login form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+
+            if (!email || !password) {
+                showLoginError('Please enter both email and password');
+                return;
+            }
+
+            showLoading();
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Check if user is admin
+                const adminDoc = await getDoc(doc(db, "admins", user.uid));
+                
+                if (adminDoc.exists()) {
+                    currentAdmin = user;
+                    adminData = adminDoc.data();
+                    showAdminPanel();
+                    showNotification('Login successful!', 'success');
+                    return;
+                }
+                
+                // If no admin settings exist, check if this is the first login
+                const adminsQuery = query(collection(db, "admins"), where("email", "==", email));
+                const adminsSnapshot = await getDocs(adminsQuery);
+                
+                if (!adminsSnapshot.empty) {
+                    currentAdmin = user;
+                    await loadAdminData(user.uid);
+                    showAdminPanel();
+                    showNotification('Login successful!', 'success');
+                    return;
+                }
+                
+                // If we get here, the user is not authorized as admin
+                await signOut(auth);
+                showLoginError('Access denied. Admin privileges required.');
+            } catch (error) {
+                console.error('Login error:', error);
+                let errorMessage = 'Login failed. Please try again.';
+                
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessage = 'No admin account found with this email.';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Incorrect password. Please try again.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Invalid email address.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = 'This account has been disabled.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Too many failed attempts. Please try again later.';
+                        break;
+                }
+                
+                showLoginError(errorMessage);
+            } finally {
+                hideLoading();
+            }
+        });
+
+        function showLoginError(message) {
+            loginError.textContent = message;
+            loginError.classList.add('show');
+            setTimeout(() => {
+                loginError.classList.remove('show');
+            }, 5000);
+        }
+
+        // Logout
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                showLoginPage();
+                showNotification('Logged out successfully', 'success');
+            } catch (error) {
+                console.error('Logout error:', error);
+                showNotification('Logout failed', 'error');
+            }
+        });
+
+        async function loadAdminData(uid) {
+            try {
+                const adminDoc = await getDoc(doc(db, "admins", uid));
+                if (adminDoc.exists()) {
+                    adminData = adminDoc.data();
+                } else {
+                    // Create admin document if it doesn't exist
+                    adminData = {
+                        name: 'Admin',
+                        email: currentAdmin.email,
+                        role: 'super_admin',
+                        createdAt: Timestamp.now(),
+                        lastLogin: Timestamp.now()
+                    };
+                    await createAdmin(uid, adminData);
+                }
+                
+                document.getElementById('userName').textContent = adminData.name || 'Admin';
+                document.getElementById('userEmail').textContent = currentAdmin.email;
+                document.getElementById('userAvatar').textContent = (adminData.name?.charAt(0) || 'A').toUpperCase();
+                
+                // Update last login
+                await updateDoc(doc(db, "admins", uid), {
+                    lastLogin: Timestamp.now()
+                });
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+                throw error;
+            }
+        }
+
+        // ==================== FIRST TIME SETUP ====================
+        async function createDefaultAdmin() {
+            const email = 'stanymines250@gmail.com';
+            const password = 'Admin@123';
+            const name = 'Super Admin';
+            
+            showLoading('Creating admin account...');
+            
+            try {
+                // Check if admin already exists
+                const adminsQuery = query(collection(db, "admins"), limit(1));
+                const existingAdmins = await getDocs(adminsQuery);
+                
+                if (!existingAdmins.empty) {
+                    showNotification('Admin already exists. Please use the login form.', 'warning');
+                    hideLoading();
+                    return;
+                }
+                
+                // Create admin user
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Create admin document using the function
+                await createAdmin(user.uid, {
+                    email: email,
+                    name: name,
+                    role: 'super_admin'
+                });
+                
+                // Create admin settings
+                await setDoc(doc(db, "settings", "admin"), {
+                    email: email,
+                    admins: [email],
+                    createdAt: Timestamp.now()
+                });
+                
+                // Create default app settings
+                await setDoc(doc(db, "settings", "app"), {
+                    appName: 'STANY MINES PREDICTOR',
+                    whatsappNumber: '255000000000',
+                    channelLink: 'https://whatsapp.com/channel/0029Vb72cVkJ3jv10gzqTn18',
+                    apiKey: 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae',
+                    price7Days: 3000,
+                    price30Days: 10000,
+                    freeTrialCount: 2,
+                    resellerCommission: 20,
+                    updatedAt: Timestamp.now(),
+                    updatedBy: user.uid
+                });
+                
+                hideLoading();
+                
+                // Auto-fill login form
+                document.getElementById('adminEmail').value = email;
+                document.getElementById('adminPassword').value = password;
+                
+                showNotification('Admin created successfully! Email: stanymines250@gmail.com, Password: Admin@123', 'success');
+                alert('Admin account created!\n\nEmail: stanymines250@gmail.com\nPassword: Admin@123\n\nPlease save these credentials and change the password immediately after login.');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Error creating admin:', error);
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    showNotification('Admin account already exists. Please use the login form.', 'warning');
+                    document.getElementById('adminEmail').value = 'stanymines250@gmail.com';
+                    document.getElementById('adminPassword').focus();
+                } else {
+                    showNotification('Error creating admin: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // ==================== PAGE NAVIGATION ====================
+        function showLoginPage() {
+            loginPage.style.display = 'flex';
+            adminPanel.style.display = 'none';
+            // Clear password field
+            document.getElementById('adminPassword').value = '';
+        }
+
+        function showAdminPanel() {
+            loginPage.style.display = 'none';
+            adminPanel.style.display = 'flex';
+            
+            // Load dashboard data
+            loadDashboard();
+        }
+
+        // Menu navigation
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = item.getAttribute('data-page');
+                
+                // Update active menu item
+                document.querySelectorAll('.menu-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                item.classList.add('active');
+                
+                // Update page title
+                const pageTitle = document.getElementById('pageTitle');
+                pageTitle.textContent = item.querySelector('.menu-text').textContent;
+                
+                // Show selected page
+                document.querySelectorAll('.admin-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${page}Page`).classList.add('active');
+                
+                // Load page data
+                switch(page) {
+                    case 'dashboard':
+                        loadDashboard();
+                        break;
+                    case 'users':
+                        loadUsers();
+                        break;
+                    case 'codes':
+                        loadCodes();
+                        break;
+                    case 'resellers':
+                        loadResellers();
+                        break;
+                    case 'payments':
+                        loadPayments();
+                        break;
+                    case 'settings':
+                        loadSettings();
+                        break;
+                    case 'analytics':
+                        loadAnalytics();
+                        break;
+                }
+            });
+        });
+
+        // ==================== DASHBOARD ====================
+        async function loadDashboard() {
+            showLoading();
+            try {
+                // Get total users
+                const usersSnapshot = await getDocs(collection(db, "users"));
+                const totalUsers = usersSnapshot.size;
+                
+                // Get premium users
+                const premiumUsers = usersSnapshot.docs.filter(doc => 
+                    doc.data().status === 'premium'
+                ).length;
+                
+                // Get today's users
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const todayUsers = usersSnapshot.docs.filter(doc => {
+                    const userData = doc.data();
+                    return userData.createdAt?.toDate() >= today;
+                }).length;
+                
+                // Get active users (last 24 hours)
+                const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                const activeUsers = usersSnapshot.docs.filter(doc => {
+                    const userData = doc.data();
+                    return userData.lastActive?.toDate() >= yesterday;
+                }).length;
+                
+                // Get total revenue
+                const paymentsQuery = query(collection(db, "payments"), where("status", "==", "completed"));
+                const paymentsSnapshot = await getDocs(paymentsQuery);
+                
+                let totalRevenue = 0;
+                paymentsSnapshot.forEach(doc => {
+                    const payment = doc.data();
+                    totalRevenue += payment.amount || 0;
+                });
+                
+                // Update UI
+                document.getElementById('totalUsers').textContent = totalUsers.toLocaleString();
+                document.getElementById('premiumUsers').textContent = premiumUsers.toLocaleString();
+                document.getElementById('activeUsers').textContent = activeUsers.toLocaleString();
+                document.getElementById('totalRevenue').textContent = totalRevenue.toLocaleString() + ' TZS';
+                
+                // Calculate changes
+                const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                yesterdayDate.setHours(0, 0, 0, 0);
+                
+                const yesterdayUsers = usersSnapshot.docs.filter(doc => {
+                    const userData = doc.data();
+                    return userData.createdAt?.toDate() >= yesterdayDate && 
+                           userData.createdAt?.toDate() < today;
+                }).length;
+                
+                const yesterdayPremium = usersSnapshot.docs.filter(doc => {
+                    const userData = doc.data();
+                    return userData.status === 'premium' && 
+                           userData.activatedAt?.toDate() >= yesterdayDate && 
+                           userData.activatedAt?.toDate() < today;
+                }).length;
+                
+                const yesterdayRevenueQuery = query(
+                    collection(db, "payments"),
+                    where("status", "==", "completed"),
+                    where("createdAt", ">=", yesterdayDate),
+                    where("createdAt", "<", today)
+                );
+                
+                const yesterdayRevenueSnapshot = await getDocs(yesterdayRevenueQuery);
+                let yesterdayRevenue = 0;
+                yesterdayRevenueSnapshot.forEach(doc => {
+                    const payment = doc.data();
+                    yesterdayRevenue += payment.amount || 0;
+                });
+                
+                // Update change indicators
+                document.getElementById('userChange').textContent = 
+                    `+${todayUsers} today (${todayUsers - yesterdayUsers >= 0 ? '+' : ''}${todayUsers - yesterdayUsers})`;
+                document.getElementById('userChange').className = `stat-change ${todayUsers >= yesterdayUsers ? 'positive' : 'negative'}`;
+                
+                document.getElementById('premiumChange').textContent = 
+                    `+${todayUsers} today (${premiumUsers - yesterdayPremium >= 0 ? '+' : ''}${premiumUsers - yesterdayPremium})`;
+                document.getElementById('premiumChange').className = `stat-change ${premiumUsers >= yesterdayPremium ? 'positive' : 'negative'}`;
+                
+                const activePercentage = totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
+                document.getElementById('activeChange').textContent = `${activePercentage}% active`;
+                
+                document.getElementById('revenueChange').textContent = 
+                    `+${totalRevenue - yesterdayRevenue} today`;
+                document.getElementById('revenueChange').className = `stat-change ${totalRevenue >= yesterdayRevenue ? 'positive' : 'negative'}`;
+                
+                // Update activity chart
+                updateActivityChart();
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showNotification('Failed to load dashboard data', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function updateActivityChart() {
+            const chartElement = document.getElementById('activityChart');
+            chartElement.innerHTML = `
+                <div style="width: 100%; text-align: center;">
+                    <h3 style="margin-bottom: 20px; color: var(--admin-primary);">Daily Activity</h3>
+                    <div style="display: flex; justify-content: center; align-items: flex-end; height: 200px; gap: 10px;">
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="width: 30px; background: var(--admin-primary); height: 150px; border-radius: 5px;"></div>
+                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Mon</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="width: 30px; background: var(--admin-success); height: 180px; border-radius: 5px;"></div>
+                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Tue</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="width: 30px; background: var(--admin-warning); height: 120px; border-radius: 5px;"></div>
+                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Wed</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="width: 30px; background: var(--admin-danger); height: 200px; border-radius: 5px;"></div>
+                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Thu</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="width: 30px; background: var(--admin-primary); height: 160px; border-radius: 5px;"></div>
+                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Fri</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="width: 30px; background: var(--admin-success); height: 140px; border-radius: 5px;"></div>
+                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Sat</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="width: 30px; background: var(--admin-warning); height: 170px; border-radius: 5px;"></div>
+                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Sun</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==================== USERS MANAGEMENT ====================
+        async function loadUsers() {
+            showLoading();
+            try {
+                const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"));
+                const usersSnapshot = await getDocs(usersQuery);
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+                
+                usersSnapshot.forEach(doc => {
+                    const user = doc.data();
+                    const row = createUserRow(doc.id, user);
+                    tbody.appendChild(row);
+                });
+                
+                // Add search functionality
+                document.getElementById('userSearch').addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const rows = tbody.querySelectorAll('tr');
+                    
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(searchTerm) ? '' : 'none';
+                    });
+                });
+                
+                // Add filter functionality
+                document.getElementById('userFilter').addEventListener('change', (e) => {
+                    const filter = e.target.value;
+                    const rows = tbody.querySelectorAll('tr');
+                    
+                    rows.forEach(row => {
+                        const status = row.querySelector('.status-badge').textContent.toLowerCase();
+                        row.style.display = filter === 'all' || status.includes(filter) ? '' : 'none';
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showNotification('Failed to load users', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function createUserRow(id, user) {
+            const row = document.createElement('tr');
+            
+            // Format dates
+            const createdDate = user.createdAt ? user.createdAt.toDate().toLocaleDateString() : 'N/A';
+            const expiryDate = user.expiryDate ? user.expiryDate.toDate().toLocaleDateString() : 'N/A';
+            const lastActive = user.lastActive ? user.lastActive.toDate().toLocaleString() : 'N/A';
+            
+            row.innerHTML = `
+                <td>${id.substring(0, 8)}...</td>
+                <td><code>${user.deviceId || id}</code></td>
+                <td><span class="status-badge ${user.status === 'premium' ? 'status-active' : 'status-inactive'}">
+                    ${user.status || 'free'}
+                </span></td>
+                <td>${expiryDate}</td>
+                <td>${lastActive}</td>
+                <td>${user.usageCount || 0}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn view" onclick="viewUser('${id}')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="action-btn delete" onclick="deleteUser('${id}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        async function viewUser(userId) {
+            showLoading();
+            try {
+                const userDoc = await getDoc(doc(db, "users", userId));
+                const userData = userDoc.data();
+                
+                document.getElementById('userDetails').innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--admin-primary); margin-bottom: 10px;">User Information</h4>
+                        <p><strong>Device ID:</strong> ${userData.deviceId || userId}</p>
+                        <p><strong>Status:</strong> <span class="status-badge ${userData.status === 'premium' ? 'status-active' : 'status-inactive'}">
+                            ${userData.status || 'free'}
+                        </span></p>
+                        <p><strong>Premium Code:</strong> ${userData.premiumCode || 'N/A'}</p>
+                        <p><strong>Created:</strong> ${userData.createdAt ? userData.createdAt.toDate().toLocaleString() : 'N/A'}</p>
+                        <p><strong>Last Active:</strong> ${userData.lastActive ? userData.lastActive.toDate().toLocaleString() : 'N/A'}</p>
+                        <p><strong>Usage Count:</strong> ${userData.usageCount || 0}</p>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="admin-btn admin-btn-danger" onclick="deleteUser('${userId}')">
+                            <i class="fas fa-trash"></i> Delete User
+                        </button>
+                        <button class="admin-btn" onclick="closeModal('viewUserModal')">
+                            Close
+                        </button>
+                    </div>
+                `;
+                
+                openModal('viewUserModal');
+            } catch (error) {
+                console.error('Error viewing user:', error);
+                showNotification('Failed to load user details', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+                return;
+            }
+            
+            showLoading();
+            try {
+                await deleteDoc(doc(db, "users", userId));
+                showNotification('User deleted successfully', 'success');
+                loadUsers();
+                closeModal('viewUserModal');
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showNotification('Failed to delete user', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ==================== PREMIUM CODES MANAGEMENT ====================
+        async function loadCodes() {
+            showLoading();
+            try {
+                const codesQuery = query(collection(db, "premiumCodes"), orderBy("createdAt", "desc"), limit(100));
+                const codesSnapshot = await getDocs(codesQuery);
+                const tbody = document.getElementById('codesTableBody');
+                tbody.innerHTML = '';
+                
+                codesSnapshot.forEach(doc => {
+                    const code = doc.data();
+                    const row = createCodeRow(doc.id, code);
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading codes:', error);
+                showNotification('Failed to load codes', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function createCodeRow(code, codeData) {
+            const row = document.createElement('tr');
+            
+            const usedBy = codeData.usedBy ? `${codeData.usedBy.substring(0, 8)}...` : 'N/A';
+            const usedAt = codeData.usedAt ? codeData.usedAt.toDate().toLocaleDateString() : 'N/A';
+            const expiryDate = codeData.expiryDate ? codeData.expiryDate.toDate().toLocaleDateString() : 'No expiry';
+            const status = codeData.used ? 'Used' : 'Active';
+            
+            row.innerHTML = `
+                <td><strong>${code}</strong></td>
+                <td>${codeData.duration || 7} days</td>
+                <td><span class="status-badge ${status === 'Active' ? 'status-active' : 'status-inactive'}">
+                    ${status}
+                </span></td>
+                <td>${usedBy}</td>
+                <td>${usedAt}</td>
+                <td>${expiryDate}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn delete" onclick="deleteCode('${code}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        function showGenerateCodeModal() {
+            loadResellersForDropdown();
+            openModal('generateCodeModal');
+        }
+
+        async function loadResellersForDropdown() {
+            try {
+                const resellersSnapshot = await getDocs(collection(db, "resellers"));
+                const select = document.getElementById('codeReseller');
+                select.innerHTML = '<option value="">No Reseller</option>';
+                
+                resellersSnapshot.forEach(doc => {
+                    const reseller = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = `${reseller.name} (${doc.id.substring(0, 8)}...)`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading resellers:', error);
+            }
+        }
+
+        async function generateCodes() {
+            const quantity = parseInt(document.getElementById('codeQuantity').value);
+            const duration = parseInt(document.getElementById('codeDuration').value);
+            const resellerId = document.getElementById('codeReseller').value;
+            const expiryInput = document.getElementById('codeExpiry').value;
+            
+            if (quantity < 1 || quantity > 1000) {
+                showNotification('Please enter a valid quantity (1-1000)', 'error');
+                return;
+            }
+            
+            showLoading('Generating codes...');
+            
+            try {
+                const codes = [];
+                const expiryDate = expiryInput ? new Date(expiryInput) : null;
+                const batch = writeBatch(db);
+                
+                for (let i = 0; i < quantity; i++) {
+                    const code = 'MINES' + Math.random().toString(36).substr(2, 8).toUpperCase();
+                    const codeRef = doc(collection(db, "premiumCodes"), code);
+                    const codeData = {
+                        code: code,
+                        duration: duration,
+                        createdBy: currentAdmin.uid,
+                        createdAt: Timestamp.now(),
+                        used: false,
+                        reseller: resellerId || null
+                    };
+                    
+                    if (expiryDate) {
+                        codeData.expiryDate = Timestamp.fromDate(expiryDate);
+                    }
+                    
+                    batch.set(codeRef, codeData);
+                    codes.push(code);
+                }
+                
+                await batch.commit();
+                
+                // Update reseller's code count if applicable
+                if (resellerId) {
+                    const resellerRef = doc(db, "resellers", resellerId);
+                    const resellerDoc = await getDoc(resellerRef);
+                    
+                    if (resellerDoc.exists()) {
+                        const currentCount = resellerDoc.data().totalCodes || 0;
+                        await updateDoc(resellerRef, {
+                            totalCodes: currentCount + quantity,
+                            lastCodeGeneration: Timestamp.now()
+                        });
+                    }
+                }
+                
+                closeModal('generateCodeModal');
+                showNotification(`${quantity} codes generated successfully!`, 'success');
+                loadCodes();
+                
+                // Show codes in alert
+                if (quantity <= 20) {
+                    setTimeout(() => {
+                        alert('Generated Codes:\n\n' + codes.join('\n'));
+                    }, 500);
+                }
+                
+            } catch (error) {
+                console.error('Error generating codes:', error);
+                showNotification('Failed to generate codes', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteCode(code) {
+            if (!confirm('Are you sure you want to delete this code?')) {
+                return;
+            }
+            
+            showLoading();
+            try {
+                await deleteDoc(doc(db, "premiumCodes", code));
+                showNotification('Code deleted successfully', 'success');
+                loadCodes();
+            } catch (error) {
+                console.error('Error deleting code:', error);
+                showNotification('Failed to delete code', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ==================== RESELLERS MANAGEMENT ====================
+        async function loadResellers() {
+            showLoading();
+            try {
+                const resellersSnapshot = await getDocs(collection(db, "resellers"));
+                const tbody = document.getElementById('resellersTableBody');
+                tbody.innerHTML = '';
+                
+                resellersSnapshot.forEach(doc => {
+                    const reseller = doc.data();
+                    const row = createResellerRow(doc.id, reseller);
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading resellers:', error);
+                showNotification('Failed to load resellers', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function createResellerRow(id, reseller) {
+            const row = document.createElement('tr');
+            
+            const codesUsed = reseller.codesUsed || 0;
+            const totalCodes = reseller.totalCodes || 0;
+            const revenue = reseller.revenue || 0;
+            const commission = reseller.commission || 20;
+            
+            row.innerHTML = `
+                <td>${reseller.name}</td>
+                <td>${reseller.email}</td>
+                <td>${reseller.phone || 'N/A'}</td>
+                <td>${totalCodes}</td>
+                <td>${codesUsed}</td>
+                <td>${revenue.toLocaleString()} TZS</td>
+                <td>${commission}%</td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn view" onclick="viewReseller('${id}')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="action-btn delete" onclick="deleteReseller('${id}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        function showAddResellerModal() {
+            openModal('addResellerModal');
+        }
+
+        async function addReseller() {
+            const name = document.getElementById('resellerName').value;
+            const email = document.getElementById('resellerEmail').value;
+            const phone = document.getElementById('resellerPhone').value;
+            const commission = parseInt(document.getElementById('resellerCommission').value);
+            const initialCodes = parseInt(document.getElementById('resellerInitialCodes').value);
+            const password = document.getElementById('resellerPassword').value;
+            
+            if (!name || !email || !password) {
+                showNotification('Please fill all required fields', 'error');
+                return;
+            }
+            
+            showLoading('Creating reseller account...');
+            
+            try {
+                // Create reseller account using the function
+                const resellerId = await createReseller({
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    commission: commission,
+                    totalCodes: initialCodes
+                }, currentAdmin.uid);
+                
+                if (!resellerId) {
+                    throw new Error('Failed to create reseller');
+                }
+
+                // Generate initial codes for reseller
+                const batch = writeBatch(db);
+                const codes = [];
+                
+                for (let i = 0; i < initialCodes; i++) {
+                    const code = 'RES' + Math.random().toString(36).substr(2, 8).toUpperCase();
+                    const codeRef = doc(collection(db, "premiumCodes"), code);
+                    batch.set(codeRef, {
+                        code: code,
+                        duration: 7,
+                        createdBy: currentAdmin.uid,
+                        reseller: resellerId,
+                        createdAt: Timestamp.now(),
+                        used: false
+                    });
+                    codes.push(code);
+                }
+                
+                await batch.commit();
+                
+                closeModal('addResellerModal');
+                showNotification('Reseller added successfully!', 'success');
+                loadResellers();
+                
+                // Show initial codes
+                setTimeout(() => {
+                    alert(`Reseller ID: ${resellerId}\n\nInitial Codes (${initialCodes}):\n\n${codes.join('\n')}`);
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error adding reseller:', error);
+                showNotification('Failed to add reseller', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function viewReseller(resellerId) {
+            showLoading();
+            try {
+                const resellerDoc = await getDoc(doc(db, "resellers", resellerId));
+                const reseller = resellerDoc.data();
+                
+                // Get reseller's codes
+                const codesQuery = query(collection(db, "premiumCodes"), where("reseller", "==", resellerId));
+                const codesSnapshot = await getDocs(codesQuery);
+                
+                const usedCodes = codesSnapshot.docs.filter(doc => doc.data().used).length;
+                const totalCodes = codesSnapshot.size;
+                
+                alert(`
+                    Reseller Details:
+                    
+                    Name: ${reseller.name}
+                    Email: ${reseller.email}
+                    Phone: ${reseller.phone || 'N/A'}
+                    Commission: ${reseller.commission || 20}%
+                    Total Codes: ${totalCodes}
+                    Codes Used: ${usedCodes}
+                    Revenue: ${reseller.revenue || 0} TZS
+                    Created: ${reseller.createdAt ? reseller.createdAt.toDate().toLocaleDateString() : 'N/A'}
+                    
+                    Reseller ID: ${resellerId}
+                `);
+            } catch (error) {
+                console.error('Error viewing reseller:', error);
+                showNotification('Failed to load reseller details', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteReseller(resellerId) {
+            if (!confirm('Are you sure you want to delete this reseller? This will also delete their codes.')) {
+                return;
+            }
+            
+            showLoading();
+            try {
+                // Delete reseller
+                await deleteDoc(doc(db, "resellers", resellerId));
+                
+                // Delete associated codes
+                const codesQuery = query(collection(db, "premiumCodes"), where("reseller", "==", resellerId));
+                const codesSnapshot = await getDocs(codesQuery);
+                
+                const batch = writeBatch(db);
+                codesSnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                
+                showNotification('Reseller deleted successfully', 'success');
+                loadResellers();
+                
+            } catch (error) {
+                console.error('Error deleting reseller:', error);
+                showNotification('Failed to delete reseller', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ==================== PAYMENTS MANAGEMENT ====================
+        async function loadPayments() {
+            showLoading();
+            try {
+                const paymentsQuery = query(collection(db, "payments"), orderBy("createdAt", "desc"));
+                const paymentsSnapshot = await getDocs(paymentsQuery);
+                const tbody = document.getElementById('paymentsTableBody');
+                tbody.innerHTML = '';
+                
+                paymentsSnapshot.forEach(doc => {
+                    const payment = doc.data();
+                    const row = createPaymentRow(doc.id, payment);
+                    tbody.appendChild(row);
+                });
+                
+                // Add filter functionality
+                document.getElementById('paymentFilter').addEventListener('change', (e) => {
+                    const filter = e.target.value;
+                    const rows = tbody.querySelectorAll('tr');
+                    
+                    rows.forEach(row => {
+                        const status = row.querySelector('.status-badge').textContent.toLowerCase();
+                        row.style.display = filter === 'all' || status.includes(filter) ? '' : 'none';
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Error loading payments:', error);
+                showNotification('Failed to load payments', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function createPaymentRow(id, payment) {
+            const row = document.createElement('tr');
+            
+            const date = payment.createdAt ? payment.createdAt.toDate().toLocaleString() : 'N/A';
+            const statusClass = payment.status === 'completed' ? 'status-active' : 
+                              payment.status === 'pending' ? 'status-pending' : 'status-inactive';
+            
+            row.innerHTML = `
+                <td>${id}</td>
+                <td>${payment.phone || 'N/A'}</td>
+                <td>${payment.amount ? payment.amount.toLocaleString() + ' TZS' : 'N/A'}</td>
+                <td><span class="status-badge ${statusClass}">
+                    ${payment.status || 'unknown'}
+                </span></td>
+                <td>${date}</td>
+                <td>${payment.deviceId ? payment.deviceId.substring(0, 8) + '...' : 'N/A'}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn view" onclick="viewPayment('${id}')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        async function viewPayment(paymentId) {
+            showLoading();
+            try {
+                const paymentDoc = await getDoc(doc(db, "payments", paymentId));
+                const payment = paymentDoc.data();
+                
+                alert(`
+                    Payment Details:
+                    
+                    Order ID: ${paymentId}
+                    Phone: ${payment.phone}
+                    Amount: ${payment.amount} TZS
+                    Status: ${payment.status}
+                    Created: ${payment.createdAt ? payment.createdAt.toDate().toLocaleString() : 'N/A'}
+                    Completed: ${payment.completedAt ? payment.completedAt.toDate().toLocaleString() : 'N/A'}
+                    User ID: ${payment.deviceId || 'N/A'}
+                    Duration: ${payment.duration || 7} days
+                    
+                    Net Amount: ${payment.netAmount || payment.amount} TZS
+                    Fee: ${payment.fee || 0} TZS
+                `);
+            } catch (error) {
+                console.error('Error viewing payment:', error);
+                showNotification('Failed to load payment details', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ==================== SETTINGS ====================
+        async function loadSettings() {
+            showLoading();
+            try {
+                const settingsDoc = await getDoc(doc(db, "settings", "app"));
+                
+                if (settingsDoc.exists()) {
+                    const settings = settingsDoc.data();
+                    
+                    // Populate form fields
+                    document.getElementById('appName').value = settings.appName || 'Mines Predictor';
+                    document.getElementById('whatsappNumber').value = settings.whatsappNumber || '';
+                    document.getElementById('channelLink').value = settings.channelLink || '';
+                    document.getElementById('apiKey').value = settings.apiKey || '';
+                    document.getElementById('price7Days').value = settings.price7Days || 3000;
+                    document.getElementById('price30Days').value = settings.price30Days || 10000;
+                    document.getElementById('freeTrialCount').value = settings.freeTrialCount || 2;
+                    document.getElementById('resellerCommission').value = settings.resellerCommission || 20;
+                }
+                
+                showNotification('Settings loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showNotification('Failed to load settings', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function saveSettings() {
+            const settings = {
+                appName: document.getElementById('appName').value,
+                whatsappNumber: document.getElementById('whatsappNumber').value,
+                channelLink: document.getElementById('channelLink').value,
+                apiKey: document.getElementById('apiKey').value,
+                price7Days: parseInt(document.getElementById('price7Days').value),
+                price30Days: parseInt(document.getElementById('price30Days').value),
+                freeTrialCount: parseInt(document.getElementById('freeTrialCount').value),
+                resellerCommission: parseInt(document.getElementById('resellerCommission').value),
+                updatedAt: Timestamp.now(),
+                updatedBy: currentAdmin.uid
+            };
+            
+            showLoading('Saving settings...');
+            
+            try {
+                await setDoc(doc(db, "settings", "app"), settings, { merge: true });
+                showNotification('Settings saved successfully!', 'success');
+                
+                // Update admin data cache
+                adminData = { ...adminData, ...settings };
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showNotification('Failed to save settings', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showSettingsModal() {
+            document.getElementById('editAdminEmail').value = currentAdmin.email;
+            document.getElementById('editAdminPassword').value = '';
+            document.getElementById('editAdminConfirm').value = '';
+            openModal('editSettingsModal');
+        }
+
+        async function updateAdminSettings() {
+            const newEmail = document.getElementById('editAdminEmail').value;
+            const newPassword = document.getElementById('editAdminPassword').value;
+            const confirmPassword = document.getElementById('editAdminConfirm').value;
+            
+            if (newPassword && newPassword !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+            
+            showLoading('Updating settings...');
+            
+            try {
+                // Update email if changed
+                if (newEmail && newEmail !== currentAdmin.email) {
+                    await updateEmail(currentAdmin, newEmail);
+                }
+                
+                // Update password if provided
+                if (newPassword) {
+                    await updatePassword(currentAdmin, newPassword);
+                }
+                
+                // Update admin document
+                await updateDoc(doc(db, "admins", currentAdmin.uid), {
+                    email: newEmail || currentAdmin.email,
+                    updatedAt: Timestamp.now()
+                });
+                
+                closeModal('editSettingsModal');
+                showNotification('Admin settings updated successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error updating admin settings:', error);
+                showNotification(error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ==================== ANALYTICS ====================
+        async function loadAnalytics() {
+            showLoading('Loading analytics...');
+            
+            try {
+                // Get user growth data (last 7 days)
+                const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                const usersQuery = query(collection(db, "users"), where("createdAt", ">=", sevenDaysAgo));
+                const usersSnapshot = await getDocs(usersQuery);
+                
+                // Group by day
+                const userGrowth = {};
+                usersSnapshot.forEach(doc => {
+                    const date = doc.data().createdAt.toDate().toLocaleDateString();
+                    userGrowth[date] = (userGrowth[date] || 0) + 1;
+                });
+                
+                // Get premium vs free ratio
+                const allUsers = await getDocs(collection(db, "users"));
+                let premiumCount = 0;
+                allUsers.forEach(doc => {
+                    if (doc.data().status === 'premium') {
+                        premiumCount++;
+                    }
+                });
+                
+                const freeCount = allUsers.size - premiumCount;
+                
+                // Get revenue by month
+                const paymentsQuery = query(collection(db, "payments"), where("status", "==", "completed"));
+                const paymentsSnapshot = await getDocs(paymentsQuery);
+                
+                const revenueByMonth = {};
+                
+                paymentsSnapshot.forEach(doc => {
+                    const payment = doc.data();
+                    if (payment.createdAt) {
+                        const date = payment.createdAt.toDate();
+                        const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                        revenueByMonth[monthYear] = (revenueByMonth[monthYear] || 0) + (payment.amount || 0);
+                    }
+                });
+                
+                // Update charts
+                updateGrowthChart(userGrowth);
+                updateUserRatioChart(premiumCount, freeCount);
+                updateRevenueChart(revenueByMonth);
+                
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                showNotification('Failed to load analytics', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function updateGrowthChart(growthData) {
+            const chartElement = document.getElementById('growthChart');
+            const dates = Object.keys(growthData).sort();
+            const values = dates.map(date => growthData[date]);
+            
+            chartElement.innerHTML = `
+                <div style="width: 100%; text-align: center;">
+                    <h3 style="margin-bottom: 20px; color: var(--admin-primary);">User Growth (Last 7 Days)</h3>
+                    <div style="display: flex; justify-content: center; align-items: flex-end; height: 200px; gap: 15px;">
+                        ${dates.map((date, index) => `
+                            <div style="display: flex; flex-direction: column; align-items: center;">
+                                <div style="width: 40px; background: var(--admin-primary); height: ${values[index] * 10}px; border-radius: 5px;"></div>
+                                <div style="margin-top: 10px; color: var(--admin-text-muted); font-size: 0.8rem;">${date}</div>
+                                <div style="margin-top: 5px; color: var(--admin-text); font-weight: bold;">${values[index]}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p style="margin-top: 20px; color: var(--admin-text-muted);">Total new users: ${Object.values(growthData).reduce((a, b) => a + b, 0)}</p>
+                </div>
+            `;
+        }
+
+        function updateUserRatioChart(premium, free) {
+            const chartElement = document.getElementById('userRatioChart');
+            const total = premium + free;
+            const premiumPercent = total > 0 ? Math.round((premium / total) * 100) : 0;
+            const freePercent = total > 0 ? Math.round((free / total) * 100) : 0;
+            
+            chartElement.innerHTML = `
+                <div style="width: 100%; text-align: center;">
+                    <h3 style="margin-bottom: 20px; color: var(--admin-primary);">User Distribution</h3>
+                    <div style="display: flex; justify-content: center; align-items: center; height: 150px; gap: 30px;">
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(var(--admin-success) 0% ${premiumPercent}%, var(--admin-primary) ${premiumPercent}% 100%);"></div>
+                            <div style="margin-top: 15px;">
+                                <span style="color: var(--admin-success); font-weight: bold;">Premium: ${premiumPercent}% (${premium})</span><br>
+                                <span style="color: var(--admin-primary); font-weight: bold;">Free: ${freePercent}% (${free})</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateRevenueChart(revenueData) {
+            const chartElement = document.getElementById('revenueChart');
+            const months = Object.keys(revenueData).sort();
+            const revenues = months.map(month => revenueData[month]);
+            
+            const maxRevenue = Math.max(...revenues, 1);
+            
+            chartElement.innerHTML = `
+                <div style="width: 100%; text-align: center;">
+                    <h3 style="margin-bottom: 20px; color: var(--admin-primary);">Revenue by Month</h3>
+                    <div style="display: flex; justify-content: center; align-items: flex-end; height: 150px; gap: 10px;">
+                        ${months.map((month, index) => {
+                            const height = (revenues[index] / maxRevenue) * 100;
+                            return `
+                                <div style="display: flex; flex-direction: column; align-items: center;">
+                                    <div style="width: 30px; background: var(--admin-warning); height: ${height}px; border-radius: 5px;"></div>
+                                    <div style="margin-top: 10px; color: var(--admin-text-muted); font-size: 0.8rem;">${month}</div>
+                                    <div style="margin-top: 5px; color: var(--admin-text); font-size: 0.7rem;">${revenues[index].toLocaleString()} TZS</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <p style="margin-top: 20px; color: var(--admin-text-muted);">Total revenue: ${Object.values(revenueData).reduce((a, b) => a + b, 0).toLocaleString()} TZS</p>
+                </div>
+            `;
+        }
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function showLoading(message) {
+            if (message) {
+                loadingOverlay.innerHTML = `<div class="loader"></div><div style="margin-top: 20px; color: var(--admin-text);">${message}</div>`;
+            }
+            loadingOverlay.classList.add('active');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.remove('active');
+            loadingOverlay.innerHTML = '<div class="loader"></div>';
+        }
+
+        function showNotification(message, type) {
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        async function exportData() {
+            showLoading('Preparing export...');
+            
+            try {
+                // Get all data
+                const [users, codes, resellers, payments, settings] = await Promise.all([
+                    getDocs(collection(db, "users")),
+                    getDocs(query(collection(db, "premiumCodes"), limit(1000))),
+                    getDocs(collection(db, "resellers")),
+                    getDocs(collection(db, "payments")),
+                    getDoc(doc(db, "settings", "app"))
+                ]);
+                
+                // Format data
+                const exportData = {
+                    exportDate: new Date().toISOString(),
+                    exportedBy: currentAdmin.email,
+                    users: users.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                    codes: codes.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                    resellers: resellers.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                    payments: payments.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                    settings: settings.exists() ? settings.data() : {}
+                };
+                
+                // Create download link
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = `mines-predictor-export-${Date.now()}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                showNotification('Data exported successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showNotification('Failed to export data', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ==================== EXPOSE FUNCTIONS TO GLOBAL SCOPE ====================
+        window.createDefaultAdmin = createDefaultAdmin;
+        window.showGenerateCodeModal = showGenerateCodeModal;
+        window.showAddResellerModal = showAddResellerModal;
+        window.showSettingsModal = showSettingsModal;
+        window.generateCodes = generateCodes;
+        window.addReseller = addReseller;
+        window.saveSettings = saveSettings;
+        window.updateAdminSettings = updateAdminSettings;
+        window.loadSettings = loadSettings;
+        window.exportData = exportData;
+        window.viewUser = viewUser;
+        window.deleteUser = deleteUser;
+        window.deleteCode = deleteCode;
+        window.viewReseller = viewReseller;
+        window.deleteReseller = deleteReseller;
+        window.viewPayment = viewPayment;
+        window.closeModal = closeModal;
+        window.openModal = openModal;
+
+    </script>
     <style>
         /* === ADMIN THEME === */
         :root {
@@ -1237,1364 +2651,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        // ==================== FIREBASE CONFIGURATION ====================
-        const firebaseConfig = {
-            apiKey: "AIzaSyDtWAjmGIWVr3QGESAClBzRkQ5AZr5Zeys",
-            authDomain: "stanybots.firebaseapp.com",
-            projectId: "stanybots",
-            storageBucket: "stanybots.firebasestorage.app",
-            messagingSenderId: "381983533939",
-            appId: "1:381983533939:web:201157399592c6389df306",
-            measurementId: "G-W3C0C280BY"
-        };
-
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(app);
-        const auth = firebase.auth(app);
-        const analytics = firebase.analytics(app);
-
-        // ==================== GLOBAL VARIABLES ====================
-        let currentAdmin = null;
-        let adminData = null;
-
-        // ==================== DOM ELEMENTS ====================
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const notification = document.getElementById('notification');
-        const loginPage = document.getElementById('loginPage');
-        const adminPanel = document.getElementById('adminPanel');
-        const loginForm = document.getElementById('loginForm');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const loginError = document.getElementById('loginError');
-
-        // ==================== INITIALIZATION ====================
-        document.addEventListener('DOMContentLoaded', () => {
-            initAdmin();
-        });
-
-        // ==================== AUTHENTICATION ====================
-        async function initAdmin() {
-            // Check if admin is already logged in
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    try {
-                        currentAdmin = user;
-                        await loadAdminData(user.uid);
-                        showAdminPanel();
-                        showNotification('Welcome back!', 'success');
-                    } catch (error) {
-                        console.error('Error loading admin data:', error);
-                        await auth.signOut();
-                        showLoginPage();
-                    }
-                } else {
-                    showLoginPage();
-                }
-            });
-        }
-
-        // Login form submission
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('adminEmail').value;
-            const password = document.getElementById('adminPassword').value;
-
-            if (!email || !password) {
-                showLoginError('Please enter both email and password');
-                return;
-            }
-
-            showLoading();
-            try {
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                
-                // Check if user is admin by checking if they exist in admin settings
-                const adminDoc = await db.collection('settings').doc('admin').get();
-                
-                if (adminDoc.exists) {
-                    const adminSettings = adminDoc.data();
-                    if (adminSettings.email === email || adminSettings.admins && adminSettings.admins.includes(email)) {
-                        currentAdmin = user;
-                        await loadAdminData(user.uid);
-                        showAdminPanel();
-                        showNotification('Login successful!', 'success');
-                        return;
-                    }
-                }
-                
-                // If no admin settings exist, check if this is the first login
-                const adminsCollection = await db.collection('admins').where('email', '==', email).get();
-                if (!adminsCollection.empty) {
-                    currentAdmin = user;
-                    await loadAdminData(user.uid);
-                    showAdminPanel();
-                    showNotification('Login successful!', 'success');
-                    return;
-                }
-                
-                // If we get here, the user is not authorized as admin
-                await auth.signOut();
-                showLoginError('Access denied. Admin privileges required.');
-            } catch (error) {
-                console.error('Login error:', error);
-                let errorMessage = 'Login failed. Please try again.';
-                
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                        errorMessage = 'No admin account found with this email.';
-                        break;
-                    case 'auth/wrong-password':
-                        errorMessage = 'Incorrect password. Please try again.';
-                        break;
-                    case 'auth/invalid-email':
-                        errorMessage = 'Invalid email address.';
-                        break;
-                    case 'auth/user-disabled':
-                        errorMessage = 'This account has been disabled.';
-                        break;
-                    case 'auth/too-many-requests':
-                        errorMessage = 'Too many failed attempts. Please try again later.';
-                        break;
-                }
-                
-                showLoginError(errorMessage);
-            } finally {
-                hideLoading();
-            }
-        });
-
-        function showLoginError(message) {
-            loginError.textContent = message;
-            loginError.classList.add('show');
-            setTimeout(() => {
-                loginError.classList.remove('show');
-            }, 5000);
-        }
-
-        // Logout
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await auth.signOut();
-                showLoginPage();
-                showNotification('Logged out successfully', 'success');
-            } catch (error) {
-                console.error('Logout error:', error);
-                showNotification('Logout failed', 'error');
-            }
-        });
-
-        async function loadAdminData(uid) {
-            try {
-                const adminDoc = await db.collection('admins').doc(uid).get();
-                if (adminDoc.exists) {
-                    adminData = adminDoc.data();
-                } else {
-                    // Create admin document if it doesn't exist
-                    adminData = {
-                        name: 'Admin',
-                        email: currentAdmin.email,
-                        role: 'super_admin',
-                        createdAt: new Date(),
-                        lastLogin: new Date()
-                    };
-                    await db.collection('admins').doc(uid).set(adminData);
-                }
-                
-                document.getElementById('userName').textContent = adminData.name || 'Admin';
-                document.getElementById('userEmail').textContent = currentAdmin.email;
-                document.getElementById('userAvatar').textContent = (adminData.name?.charAt(0) || 'A').toUpperCase();
-                
-                // Update last login
-                await db.collection('admins').doc(uid).update({
-                    lastLogin: new Date()
-                });
-            } catch (error) {
-                console.error('Error loading admin data:', error);
-                throw error;
-            }
-        }
-
-        // ==================== FIRST TIME SETUP ====================
-        async function createDefaultAdmin() {
-            const email = 'admin@stanybots.com';
-            const password = 'Admin@123';
-            
-            showLoading('Creating default admin account...');
-            
-            try {
-                // Check if admin already exists
-                const existingAdmins = await db.collection('admins').limit(1).get();
-                
-                if (!existingAdmins.empty) {
-                    showNotification('Admin already exists. Please use the login form.', 'warning');
-                    hideLoading();
-                    return;
-                }
-                
-                // Create admin user
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                
-                // Create admin document
-                const adminData = {
-                    name: 'Administrator',
-                    email: email,
-                    role: 'super_admin',
-                    createdAt: new Date(),
-                    lastLogin: new Date()
-                };
-                
-                await db.collection('admins').doc(user.uid).set(adminData);
-                
-                // Create admin settings
-                const adminSettings = {
-                    email: email,
-                    admins: [email],
-                    createdAt: new Date()
-                };
-                
-                await db.collection('settings').doc('admin').set(adminSettings);
-                
-                // Create default app settings
-                const appSettings = {
-                    appName: 'STANY MINES PREDICTOR',
-                    whatsappNumber: '255000000000',
-                    channelLink: 'https://whatsapp.com/channel/0029Vb72cVkJ3jv10gzqTn18',
-                    apiKey: 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae',
-                    price7Days: 3000,
-                    price30Days: 10000,
-                    freeTrialCount: 2,
-                    resellerCommission: 20,
-                    updatedAt: new Date(),
-                    updatedBy: user.uid
-                };
-                
-                await db.collection('settings').doc('app').set(appSettings);
-                
-                hideLoading();
-                
-                // Auto-fill login form
-                document.getElementById('adminEmail').value = email;
-                document.getElementById('adminPassword').value = password;
-                
-                showNotification('Default admin created successfully! Email: admin@stanybots.com, Password: Admin@123', 'success');
-                alert('Default admin account created!\n\nEmail: admin@stanybots.com\nPassword: Admin@123\n\nPlease save these credentials and change the password immediately after login.');
-                
-            } catch (error) {
-                hideLoading();
-                console.error('Error creating default admin:', error);
-                
-                if (error.code === 'auth/email-already-in-use') {
-                    showNotification('Admin account already exists. Please use the login form.', 'warning');
-                    document.getElementById('adminEmail').value = 'admin@stanybots.com';
-                    document.getElementById('adminPassword').focus();
-                } else {
-                    showNotification('Error creating admin: ' + error.message, 'error');
-                }
-            }
-        }
-
-        // ==================== PAGE NAVIGATION ====================
-        function showLoginPage() {
-            loginPage.style.display = 'flex';
-            adminPanel.style.display = 'none';
-            // Clear password field
-            document.getElementById('adminPassword').value = '';
-        }
-
-        function showAdminPanel() {
-            loginPage.style.display = 'none';
-            adminPanel.style.display = 'flex';
-            
-            // Load dashboard data
-            loadDashboard();
-        }
-
-        // Menu navigation
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const page = item.getAttribute('data-page');
-                
-                // Update active menu item
-                document.querySelectorAll('.menu-item').forEach(i => {
-                    i.classList.remove('active');
-                });
-                item.classList.add('active');
-                
-                // Update page title
-                const pageTitle = document.getElementById('pageTitle');
-                pageTitle.textContent = item.querySelector('.menu-text').textContent;
-                
-                // Show selected page
-                document.querySelectorAll('.admin-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                document.getElementById(`${page}Page`).classList.add('active');
-                
-                // Load page data
-                switch(page) {
-                    case 'dashboard':
-                        loadDashboard();
-                        break;
-                    case 'users':
-                        loadUsers();
-                        break;
-                    case 'codes':
-                        loadCodes();
-                        break;
-                    case 'resellers':
-                        loadResellers();
-                        break;
-                    case 'payments':
-                        loadPayments();
-                        break;
-                    case 'settings':
-                        loadSettings();
-                        break;
-                    case 'analytics':
-                        loadAnalytics();
-                        break;
-                }
-            });
-        });
-
-        // ==================== DASHBOARD ====================
-        async function loadDashboard() {
-            showLoading();
-            try {
-                // Get total users
-                const usersSnapshot = await db.collection('users').get();
-                const totalUsers = usersSnapshot.size;
-                
-                // Get premium users
-                const premiumUsers = usersSnapshot.docs.filter(doc => 
-                    doc.data().status === 'premium'
-                ).length;
-                
-                // Get today's users
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const todayUsers = usersSnapshot.docs.filter(doc => {
-                    const userData = doc.data();
-                    return userData.createdAt?.toDate() >= today;
-                }).length;
-                
-                // Get active users (last 24 hours)
-                const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-                const activeUsers = usersSnapshot.docs.filter(doc => {
-                    const userData = doc.data();
-                    return userData.lastActive?.toDate() >= yesterday;
-                }).length;
-                
-                // Get total revenue
-                const paymentsSnapshot = await db.collection('payments')
-                    .where('status', '==', 'completed')
-                    .get();
-                
-                let totalRevenue = 0;
-                paymentsSnapshot.forEach(doc => {
-                    const payment = doc.data();
-                    totalRevenue += payment.amount || 0;
-                });
-                
-                // Update UI
-                document.getElementById('totalUsers').textContent = totalUsers.toLocaleString();
-                document.getElementById('premiumUsers').textContent = premiumUsers.toLocaleString();
-                document.getElementById('activeUsers').textContent = activeUsers.toLocaleString();
-                document.getElementById('totalRevenue').textContent = totalRevenue.toLocaleString() + ' TZS';
-                
-                // Calculate changes
-                const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-                yesterdayDate.setHours(0, 0, 0, 0);
-                
-                const yesterdayUsers = usersSnapshot.docs.filter(doc => {
-                    const userData = doc.data();
-                    return userData.createdAt?.toDate() >= yesterdayDate && 
-                           userData.createdAt?.toDate() < today;
-                }).length;
-                
-                const yesterdayPremium = usersSnapshot.docs.filter(doc => {
-                    const userData = doc.data();
-                    return userData.status === 'premium' && 
-                           userData.activatedAt?.toDate() >= yesterdayDate && 
-                           userData.activatedAt?.toDate() < today;
-                }).length;
-                
-                const yesterdayRevenueSnapshot = await db.collection('payments')
-                    .where('status', '==', 'completed')
-                    .where('createdAt', '>=', yesterdayDate)
-                    .where('createdAt', '<', today)
-                    .get();
-                
-                let yesterdayRevenue = 0;
-                yesterdayRevenueSnapshot.forEach(doc => {
-                    const payment = doc.data();
-                    yesterdayRevenue += payment.amount || 0;
-                });
-                
-                // Update change indicators
-                document.getElementById('userChange').textContent = 
-                    `+${todayUsers} today (${todayUsers - yesterdayUsers >= 0 ? '+' : ''}${todayUsers - yesterdayUsers})`;
-                document.getElementById('userChange').className = `stat-change ${todayUsers >= yesterdayUsers ? 'positive' : 'negative'}`;
-                
-                document.getElementById('premiumChange').textContent = 
-                    `+${todayUsers} today (${premiumUsers - yesterdayPremium >= 0 ? '+' : ''}${premiumUsers - yesterdayPremium})`;
-                document.getElementById('premiumChange').className = `stat-change ${premiumUsers >= yesterdayPremium ? 'positive' : 'negative'}`;
-                
-                const activePercentage = totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
-                document.getElementById('activeChange').textContent = `${activePercentage}% active`;
-                
-                document.getElementById('revenueChange').textContent = 
-                    `+${totalRevenue - yesterdayRevenue} today`;
-                document.getElementById('revenueChange').className = `stat-change ${totalRevenue >= yesterdayRevenue ? 'positive' : 'negative'}`;
-                
-                // Update activity chart
-                updateActivityChart();
-                
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-                showNotification('Failed to load dashboard data', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function updateActivityChart() {
-            // Simple activity chart
-            const chartElement = document.getElementById('activityChart');
-            chartElement.innerHTML = `
-                <div style="width: 100%; text-align: center;">
-                    <h3 style="margin-bottom: 20px; color: var(--admin-primary);">Daily Activity</h3>
-                    <div style="display: flex; justify-content: center; align-items: flex-end; height: 200px; gap: 10px;">
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <div style="width: 30px; background: var(--admin-primary); height: 150px; border-radius: 5px;"></div>
-                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Mon</div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <div style="width: 30px; background: var(--admin-success); height: 180px; border-radius: 5px;"></div>
-                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Tue</div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <div style="width: 30px; background: var(--admin-warning); height: 120px; border-radius: 5px;"></div>
-                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Wed</div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <div style="width: 30px; background: var(--admin-danger); height: 200px; border-radius: 5px;"></div>
-                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Thu</div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <div style="width: 30px; background: var(--admin-primary); height: 160px; border-radius: 5px;"></div>
-                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Fri</div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <div style="width: 30px; background: var(--admin-success); height: 140px; border-radius: 5px;"></div>
-                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Sat</div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <div style="width: 30px; background: var(--admin-warning); height: 170px; border-radius: 5px;"></div>
-                            <div style="margin-top: 10px; color: var(--admin-text-muted);">Sun</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // ==================== USERS MANAGEMENT ====================
-        async function loadUsers() {
-            showLoading();
-            try {
-                const usersSnapshot = await db.collection('users').orderBy('createdAt', 'desc').get();
-                const tbody = document.getElementById('usersTableBody');
-                tbody.innerHTML = '';
-                
-                usersSnapshot.forEach(doc => {
-                    const user = doc.data();
-                    const row = createUserRow(doc.id, user);
-                    tbody.appendChild(row);
-                });
-                
-                // Add search functionality
-                document.getElementById('userSearch').addEventListener('input', (e) => {
-                    const searchTerm = e.target.value.toLowerCase();
-                    const rows = tbody.querySelectorAll('tr');
-                    
-                    rows.forEach(row => {
-                        const text = row.textContent.toLowerCase();
-                        row.style.display = text.includes(searchTerm) ? '' : 'none';
-                    });
-                });
-                
-                // Add filter functionality
-                document.getElementById('userFilter').addEventListener('change', (e) => {
-                    const filter = e.target.value;
-                    const rows = tbody.querySelectorAll('tr');
-                    
-                    rows.forEach(row => {
-                        const status = row.querySelector('.status-badge').textContent.toLowerCase();
-                        row.style.display = filter === 'all' || status.includes(filter) ? '' : 'none';
-                    });
-                });
-                
-            } catch (error) {
-                console.error('Error loading users:', error);
-                showNotification('Failed to load users', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function createUserRow(id, user) {
-            const row = document.createElement('tr');
-            
-            // Format dates
-            const createdDate = user.createdAt ? user.createdAt.toDate().toLocaleDateString() : 'N/A';
-            const expiryDate = user.expiryDate ? user.expiryDate.toDate().toLocaleDateString() : 'N/A';
-            const lastActive = user.lastActive ? user.lastActive.toDate().toLocaleString() : 'N/A';
-            
-            row.innerHTML = `
-                <td>${id.substring(0, 8)}...</td>
-                <td><code>${user.deviceId || id}</code></td>
-                <td><span class="status-badge ${user.status === 'premium' ? 'status-active' : 'status-inactive'}">
-                    ${user.status || 'free'}
-                </span></td>
-                <td>${expiryDate}</td>
-                <td>${lastActive}</td>
-                <td>${user.usageCount || 0}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="action-btn view" onclick="viewUser('${id}')">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                        <button class="action-btn delete" onclick="deleteUser('${id}')">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </td>
-            `;
-            
-            return row;
-        }
-
-        async function viewUser(userId) {
-            showLoading();
-            try {
-                const userDoc = await db.collection('users').doc(userId).get();
-                const userData = userDoc.data();
-                
-                document.getElementById('userDetails').innerHTML = `
-                    <div style="margin-bottom: 20px;">
-                        <h4 style="color: var(--admin-primary); margin-bottom: 10px;">User Information</h4>
-                        <p><strong>Device ID:</strong> ${userData.deviceId || userId}</p>
-                        <p><strong>Status:</strong> <span class="status-badge ${userData.status === 'premium' ? 'status-active' : 'status-inactive'}">
-                            ${userData.status || 'free'}
-                        </span></p>
-                        <p><strong>Premium Code:</strong> ${userData.premiumCode || 'N/A'}</p>
-                        <p><strong>Created:</strong> ${userData.createdAt ? userData.createdAt.toDate().toLocaleString() : 'N/A'}</p>
-                        <p><strong>Last Active:</strong> ${userData.lastActive ? userData.lastActive.toDate().toLocaleString() : 'N/A'}</p>
-                        <p><strong>Usage Count:</strong> ${userData.usageCount || 0}</p>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button class="admin-btn admin-btn-danger" onclick="deleteUser('${userId}')">
-                            <i class="fas fa-trash"></i> Delete User
-                        </button>
-                        <button class="admin-btn" onclick="closeModal('viewUserModal')">
-                            Close
-                        </button>
-                    </div>
-                `;
-                
-                openModal('viewUserModal');
-            } catch (error) {
-                console.error('Error viewing user:', error);
-                showNotification('Failed to load user details', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        async function deleteUser(userId) {
-            if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-                return;
-            }
-            
-            showLoading();
-            try {
-                await db.collection('users').doc(userId).delete();
-                showNotification('User deleted successfully', 'success');
-                loadUsers();
-                closeModal('viewUserModal');
-            } catch (error) {
-                console.error('Error deleting user:', error);
-                showNotification('Failed to delete user', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // ==================== PREMIUM CODES MANAGEMENT ====================
-        async function loadCodes() {
-            showLoading();
-            try {
-                const codesSnapshot = await db.collection('premiumCodes').orderBy('createdAt', 'desc').limit(100).get();
-                const tbody = document.getElementById('codesTableBody');
-                tbody.innerHTML = '';
-                
-                codesSnapshot.forEach(doc => {
-                    const code = doc.data();
-                    const row = createCodeRow(doc.id, code);
-                    tbody.appendChild(row);
-                });
-                
-            } catch (error) {
-                console.error('Error loading codes:', error);
-                showNotification('Failed to load codes', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function createCodeRow(code, codeData) {
-            const row = document.createElement('tr');
-            
-            const usedBy = codeData.usedBy ? `${codeData.usedBy.substring(0, 8)}...` : 'N/A';
-            const usedAt = codeData.usedAt ? codeData.usedAt.toDate().toLocaleDateString() : 'N/A';
-            const expiryDate = codeData.expiryDate ? codeData.expiryDate.toDate().toLocaleDateString() : 'No expiry';
-            const status = codeData.used ? 'Used' : 'Active';
-            
-            row.innerHTML = `
-                <td><strong>${code}</strong></td>
-                <td>${codeData.duration || 7} days</td>
-                <td><span class="status-badge ${status === 'Active' ? 'status-active' : 'status-inactive'}">
-                    ${status}
-                </span></td>
-                <td>${usedBy}</td>
-                <td>${usedAt}</td>
-                <td>${expiryDate}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="action-btn delete" onclick="deleteCode('${code}')">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </td>
-            `;
-            
-            return row;
-        }
-
-        function showGenerateCodeModal() {
-            loadResellersForDropdown();
-            openModal('generateCodeModal');
-        }
-
-        async function loadResellersForDropdown() {
-            try {
-                const resellersSnapshot = await db.collection('resellers').get();
-                const select = document.getElementById('codeReseller');
-                select.innerHTML = '<option value="">No Reseller</option>';
-                
-                resellersSnapshot.forEach(doc => {
-                    const reseller = doc.data();
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = `${reseller.name} (${doc.id.substring(0, 8)}...)`;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error loading resellers:', error);
-            }
-        }
-
-        async function generateCodes() {
-            const quantity = parseInt(document.getElementById('codeQuantity').value);
-            const duration = parseInt(document.getElementById('codeDuration').value);
-            const resellerId = document.getElementById('codeReseller').value;
-            const expiryInput = document.getElementById('codeExpiry').value;
-            
-            if (quantity < 1 || quantity > 1000) {
-                showNotification('Please enter a valid quantity (1-1000)', 'error');
-                return;
-            }
-            
-            showLoading('Generating codes...');
-            
-            try {
-                const codes = [];
-                const expiryDate = expiryInput ? new Date(expiryInput) : null;
-                const batch = db.batch();
-                
-                for (let i = 0; i < quantity; i++) {
-                    const code = 'MINES' + Math.random().toString(36).substr(2, 8).toUpperCase();
-                    const codeRef = db.collection('premiumCodes').doc(code);
-                    const codeData = {
-                        code: code,
-                        duration: duration,
-                        createdBy: currentAdmin.uid,
-                        createdAt: new Date(),
-                        used: false,
-                        reseller: resellerId || null
-                    };
-                    
-                    if (expiryDate) {
-                        codeData.expiryDate = expiryDate;
-                    }
-                    
-                    batch.set(codeRef, codeData);
-                    codes.push(code);
-                }
-                
-                await batch.commit();
-                
-                // Update reseller's code count if applicable
-                if (resellerId) {
-                    const resellerRef = db.collection('resellers').doc(resellerId);
-                    const resellerDoc = await resellerRef.get();
-                    
-                    if (resellerDoc.exists) {
-                        const currentCount = resellerDoc.data().totalCodes || 0;
-                        await resellerRef.update({
-                            totalCodes: currentCount + quantity,
-                            lastCodeGeneration: new Date()
-                        });
-                    }
-                }
-                
-                closeModal('generateCodeModal');
-                showNotification(`${quantity} codes generated successfully!`, 'success');
-                loadCodes();
-                
-                // Show codes in alert
-                if (quantity <= 20) {
-                    setTimeout(() => {
-                        alert('Generated Codes:\n\n' + codes.join('\n'));
-                    }, 500);
-                }
-                
-            } catch (error) {
-                console.error('Error generating codes:', error);
-                showNotification('Failed to generate codes', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        async function deleteCode(code) {
-            if (!confirm('Are you sure you want to delete this code?')) {
-                return;
-            }
-            
-            showLoading();
-            try {
-                await db.collection('premiumCodes').doc(code).delete();
-                showNotification('Code deleted successfully', 'success');
-                loadCodes();
-            } catch (error) {
-                console.error('Error deleting code:', error);
-                showNotification('Failed to delete code', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // ==================== RESELLERS MANAGEMENT ====================
-        async function loadResellers() {
-            showLoading();
-            try {
-                const resellersSnapshot = await db.collection('resellers').get();
-                const tbody = document.getElementById('resellersTableBody');
-                tbody.innerHTML = '';
-                
-                resellersSnapshot.forEach(doc => {
-                    const reseller = doc.data();
-                    const row = createResellerRow(doc.id, reseller);
-                    tbody.appendChild(row);
-                });
-                
-            } catch (error) {
-                console.error('Error loading resellers:', error);
-                showNotification('Failed to load resellers', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function createResellerRow(id, reseller) {
-            const row = document.createElement('tr');
-            
-            const codesUsed = reseller.codesUsed || 0;
-            const totalCodes = reseller.totalCodes || 0;
-            const revenue = reseller.revenue || 0;
-            const commission = reseller.commission || 20;
-            
-            row.innerHTML = `
-                <td>${reseller.name}</td>
-                <td>${reseller.email}</td>
-                <td>${reseller.phone || 'N/A'}</td>
-                <td>${totalCodes}</td>
-                <td>${codesUsed}</td>
-                <td>${revenue.toLocaleString()} TZS</td>
-                <td>${commission}%</td>
-                <td><span class="status-badge status-active">Active</span></td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="action-btn view" onclick="viewReseller('${id}')">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                        <button class="action-btn delete" onclick="deleteReseller('${id}')">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </td>
-            `;
-            
-            return row;
-        }
-
-        function showAddResellerModal() {
-            openModal('addResellerModal');
-        }
-
-        async function addReseller() {
-            const name = document.getElementById('resellerName').value;
-            const email = document.getElementById('resellerEmail').value;
-            const phone = document.getElementById('resellerPhone').value;
-            const commission = parseInt(document.getElementById('resellerCommission').value);
-            const initialCodes = parseInt(document.getElementById('resellerInitialCodes').value);
-            const password = document.getElementById('resellerPassword').value;
-            
-            if (!name || !email || !password) {
-                showNotification('Please fill all required fields', 'error');
-                return;
-            }
-            
-            showLoading('Creating reseller account...');
-            
-            try {
-                // Create reseller account
-                const resellerId = 'RES_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4).toUpperCase();
-                
-                const resellerData = {
-                    name: name,
-                    email: email,
-                    phone: phone,
-                    commission: commission,
-                    totalCodes: initialCodes,
-                    codesUsed: 0,
-                    revenue: 0,
-                    createdAt: new Date(),
-                    createdBy: currentAdmin.uid
-                };
-                
-                await db.collection('resellers').doc(resellerId).set(resellerData);
-                
-                // Generate initial codes for reseller
-                const batch = db.batch();
-                const codes = [];
-                
-                for (let i = 0; i < initialCodes; i++) {
-                    const code = 'RES' + Math.random().toString(36).substr(2, 8).toUpperCase();
-                    const codeRef = db.collection('premiumCodes').doc(code);
-                    batch.set(codeRef, {
-                        code: code,
-                        duration: 7,
-                        createdBy: currentAdmin.uid,
-                        reseller: resellerId,
-                        createdAt: new Date(),
-                        used: false
-                    });
-                    codes.push(code);
-                }
-                
-                await batch.commit();
-                
-                closeModal('addResellerModal');
-                showNotification('Reseller added successfully!', 'success');
-                loadResellers();
-                
-                // Show initial codes
-                setTimeout(() => {
-                    alert(`Reseller ID: ${resellerId}\n\nInitial Codes (${initialCodes}):\n\n${codes.join('\n')}`);
-                }, 500);
-                
-            } catch (error) {
-                console.error('Error adding reseller:', error);
-                showNotification('Failed to add reseller', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        async function viewReseller(resellerId) {
-            showLoading();
-            try {
-                const resellerDoc = await db.collection('resellers').doc(resellerId).get();
-                const reseller = resellerDoc.data();
-                
-                // Get reseller's codes
-                const codesSnapshot = await db.collection('premiumCodes')
-                    .where('reseller', '==', resellerId)
-                    .get();
-                
-                const usedCodes = codesSnapshot.docs.filter(doc => doc.data().used).length;
-                const totalCodes = codesSnapshot.size;
-                
-                alert(`
-                    Reseller Details:
-                    
-                    Name: ${reseller.name}
-                    Email: ${reseller.email}
-                    Phone: ${reseller.phone || 'N/A'}
-                    Commission: ${reseller.commission || 20}%
-                    Total Codes: ${totalCodes}
-                    Codes Used: ${usedCodes}
-                    Revenue: ${reseller.revenue || 0} TZS
-                    Created: ${reseller.createdAt ? reseller.createdAt.toDate().toLocaleDateString() : 'N/A'}
-                    
-                    Reseller ID: ${resellerId}
-                `);
-            } catch (error) {
-                console.error('Error viewing reseller:', error);
-                showNotification('Failed to load reseller details', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        async function deleteReseller(resellerId) {
-            if (!confirm('Are you sure you want to delete this reseller? This will also delete their codes.')) {
-                return;
-            }
-            
-            showLoading();
-            try {
-                // Delete reseller
-                await db.collection('resellers').doc(resellerId).delete();
-                
-                // Delete associated codes
-                const codesSnapshot = await db.collection('premiumCodes')
-                    .where('reseller', '==', resellerId)
-                    .get();
-                
-                const batch = db.batch();
-                codesSnapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                await batch.commit();
-                
-                showNotification('Reseller deleted successfully', 'success');
-                loadResellers();
-                
-            } catch (error) {
-                console.error('Error deleting reseller:', error);
-                showNotification('Failed to delete reseller', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // ==================== PAYMENTS MANAGEMENT ====================
-        async function loadPayments() {
-            showLoading();
-            try {
-                const paymentsSnapshot = await db.collection('payments').orderBy('createdAt', 'desc').get();
-                const tbody = document.getElementById('paymentsTableBody');
-                tbody.innerHTML = '';
-                
-                paymentsSnapshot.forEach(doc => {
-                    const payment = doc.data();
-                    const row = createPaymentRow(doc.id, payment);
-                    tbody.appendChild(row);
-                });
-                
-                // Add filter functionality
-                document.getElementById('paymentFilter').addEventListener('change', (e) => {
-                    const filter = e.target.value;
-                    const rows = tbody.querySelectorAll('tr');
-                    
-                    rows.forEach(row => {
-                        const status = row.querySelector('.status-badge').textContent.toLowerCase();
-                        row.style.display = filter === 'all' || status.includes(filter) ? '' : 'none';
-                    });
-                });
-                
-            } catch (error) {
-                console.error('Error loading payments:', error);
-                showNotification('Failed to load payments', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function createPaymentRow(id, payment) {
-            const row = document.createElement('tr');
-            
-            const date = payment.createdAt ? payment.createdAt.toDate().toLocaleString() : 'N/A';
-            const statusClass = payment.status === 'completed' ? 'status-active' : 
-                              payment.status === 'pending' ? 'status-pending' : 'status-inactive';
-            
-            row.innerHTML = `
-                <td>${id}</td>
-                <td>${payment.phone || 'N/A'}</td>
-                <td>${payment.amount ? payment.amount.toLocaleString() + ' TZS' : 'N/A'}</td>
-                <td><span class="status-badge ${statusClass}">
-                    ${payment.status || 'unknown'}
-                </span></td>
-                <td>${date}</td>
-                <td>${payment.deviceId ? payment.deviceId.substring(0, 8) + '...' : 'N/A'}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="action-btn view" onclick="viewPayment('${id}')">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                    </div>
-                </td>
-            `;
-            
-            return row;
-        }
-
-        async function viewPayment(paymentId) {
-            showLoading();
-            try {
-                const paymentDoc = await db.collection('payments').doc(paymentId).get();
-                const payment = paymentDoc.data();
-                
-                alert(`
-                    Payment Details:
-                    
-                    Order ID: ${paymentId}
-                    Phone: ${payment.phone}
-                    Amount: ${payment.amount} TZS
-                    Status: ${payment.status}
-                    Created: ${payment.createdAt ? payment.createdAt.toDate().toLocaleString() : 'N/A'}
-                    Completed: ${payment.completedAt ? payment.completedAt.toDate().toLocaleString() : 'N/A'}
-                    User ID: ${payment.deviceId || 'N/A'}
-                    Duration: ${payment.duration || 7} days
-                    
-                    Net Amount: ${payment.netAmount || payment.amount} TZS
-                    Fee: ${payment.fee || 0} TZS
-                `);
-            } catch (error) {
-                console.error('Error viewing payment:', error);
-                showNotification('Failed to load payment details', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // ==================== SETTINGS ====================
-        async function loadSettings() {
-            showLoading();
-            try {
-                const settingsDoc = await db.collection('settings').doc('app').get();
-                
-                if (settingsDoc.exists) {
-                    const settings = settingsDoc.data();
-                    
-                    // Populate form fields
-                    document.getElementById('appName').value = settings.appName || 'Mines Predictor';
-                    document.getElementById('whatsappNumber').value = settings.whatsappNumber || '';
-                    document.getElementById('channelLink').value = settings.channelLink || '';
-                    document.getElementById('apiKey').value = settings.apiKey || '';
-                    document.getElementById('price7Days').value = settings.price7Days || 3000;
-                    document.getElementById('price30Days').value = settings.price30Days || 10000;
-                    document.getElementById('freeTrialCount').value = settings.freeTrialCount || 2;
-                    document.getElementById('resellerCommission').value = settings.resellerCommission || 20;
-                }
-                
-                showNotification('Settings loaded successfully', 'success');
-            } catch (error) {
-                console.error('Error loading settings:', error);
-                showNotification('Failed to load settings', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        async function saveSettings() {
-            const settings = {
-                appName: document.getElementById('appName').value,
-                whatsappNumber: document.getElementById('whatsappNumber').value,
-                channelLink: document.getElementById('channelLink').value,
-                apiKey: document.getElementById('apiKey').value,
-                price7Days: parseInt(document.getElementById('price7Days').value),
-                price30Days: parseInt(document.getElementById('price30Days').value),
-                freeTrialCount: parseInt(document.getElementById('freeTrialCount').value),
-                resellerCommission: parseInt(document.getElementById('resellerCommission').value),
-                updatedAt: new Date(),
-                updatedBy: currentAdmin.uid
-            };
-            
-            showLoading('Saving settings...');
-            
-            try {
-                await db.collection('settings').doc('app').set(settings, { merge: true });
-                showNotification('Settings saved successfully!', 'success');
-                
-                // Update admin data cache
-                adminData = { ...adminData, ...settings };
-            } catch (error) {
-                console.error('Error saving settings:', error);
-                showNotification('Failed to save settings', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function showSettingsModal() {
-            document.getElementById('editAdminEmail').value = currentAdmin.email;
-            document.getElementById('editAdminPassword').value = '';
-            document.getElementById('editAdminConfirm').value = '';
-            openModal('editSettingsModal');
-        }
-
-        async function updateAdminSettings() {
-            const newEmail = document.getElementById('editAdminEmail').value;
-            const newPassword = document.getElementById('editAdminPassword').value;
-            const confirmPassword = document.getElementById('editAdminConfirm').value;
-            
-            if (newPassword && newPassword !== confirmPassword) {
-                showNotification('Passwords do not match', 'error');
-                return;
-            }
-            
-            showLoading('Updating settings...');
-            
-            try {
-                // Update email if changed
-                if (newEmail && newEmail !== currentAdmin.email) {
-                    await currentAdmin.updateEmail(newEmail);
-                }
-                
-                // Update password if provided
-                if (newPassword) {
-                    await currentAdmin.updatePassword(newPassword);
-                }
-                
-                // Update admin document
-                await db.collection('admins').doc(currentAdmin.uid).update({
-                    email: newEmail || currentAdmin.email,
-                    updatedAt: new Date()
-                });
-                
-                closeModal('editSettingsModal');
-                showNotification('Admin settings updated successfully!', 'success');
-                
-            } catch (error) {
-                console.error('Error updating admin settings:', error);
-                showNotification(error.message, 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // ==================== ANALYTICS ====================
-        async function loadAnalytics() {
-            showLoading('Loading analytics...');
-            
-            try {
-                // Get user growth data (last 7 days)
-                const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                const usersSnapshot = await db.collection('users')
-                    .where('createdAt', '>=', sevenDaysAgo)
-                    .get();
-                
-                // Group by day
-                const userGrowth = {};
-                usersSnapshot.forEach(doc => {
-                    const date = doc.data().createdAt.toDate().toLocaleDateString();
-                    userGrowth[date] = (userGrowth[date] || 0) + 1;
-                });
-                
-                // Get premium vs free ratio
-                const allUsers = await db.collection('users').get();
-                let premiumCount = 0;
-                allUsers.forEach(doc => {
-                    if (doc.data().status === 'premium') {
-                        premiumCount++;
-                    }
-                });
-                
-                const freeCount = allUsers.size - premiumCount;
-                
-                // Get revenue by month
-                const paymentsSnapshot = await db.collection('payments')
-                    .where('status', '==', 'completed')
-                    .get();
-                
-                const revenueByMonth = {};
-                
-                paymentsSnapshot.forEach(doc => {
-                    const payment = doc.data();
-                    if (payment.createdAt) {
-                        const date = payment.createdAt.toDate();
-                        const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-                        revenueByMonth[monthYear] = (revenueByMonth[monthYear] || 0) + (payment.amount || 0);
-                    }
-                });
-                
-                // Update charts
-                updateGrowthChart(userGrowth);
-                updateUserRatioChart(premiumCount, freeCount);
-                updateRevenueChart(revenueByMonth);
-                
-            } catch (error) {
-                console.error('Error loading analytics:', error);
-                showNotification('Failed to load analytics', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function updateGrowthChart(growthData) {
-            const chartElement = document.getElementById('growthChart');
-            const dates = Object.keys(growthData).sort();
-            const values = dates.map(date => growthData[date]);
-            
-            chartElement.innerHTML = `
-                <div style="width: 100%; text-align: center;">
-                    <h3 style="margin-bottom: 20px; color: var(--admin-primary);">User Growth (Last 7 Days)</h3>
-                    <div style="display: flex; justify-content: center; align-items: flex-end; height: 200px; gap: 15px;">
-                        ${dates.map((date, index) => `
-                            <div style="display: flex; flex-direction: column; align-items: center;">
-                                <div style="width: 40px; background: var(--admin-primary); height: ${values[index] * 10}px; border-radius: 5px;"></div>
-                                <div style="margin-top: 10px; color: var(--admin-text-muted); font-size: 0.8rem;">${date}</div>
-                                <div style="margin-top: 5px; color: var(--admin-text); font-weight: bold;">${values[index]}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <p style="margin-top: 20px; color: var(--admin-text-muted);">Total new users: ${Object.values(growthData).reduce((a, b) => a + b, 0)}</p>
-                </div>
-            `;
-        }
-
-        function updateUserRatioChart(premium, free) {
-            const chartElement = document.getElementById('userRatioChart');
-            const total = premium + free;
-            const premiumPercent = total > 0 ? Math.round((premium / total) * 100) : 0;
-            const freePercent = total > 0 ? Math.round((free / total) * 100) : 0;
-            
-            chartElement.innerHTML = `
-                <div style="width: 100%; text-align: center;">
-                    <h3 style="margin-bottom: 20px; color: var(--admin-primary);">User Distribution</h3>
-                    <div style="display: flex; justify-content: center; align-items: center; height: 150px; gap: 30px;">
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <div style="width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(var(--admin-success) 0% ${premiumPercent}%, var(--admin-primary) ${premiumPercent}% 100%);"></div>
-                            <div style="margin-top: 15px;">
-                                <span style="color: var(--admin-success); font-weight: bold;">Premium: ${premiumPercent}% (${premium})</span><br>
-                                <span style="color: var(--admin-primary); font-weight: bold;">Free: ${freePercent}% (${free})</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function updateRevenueChart(revenueData) {
-            const chartElement = document.getElementById('revenueChart');
-            const months = Object.keys(revenueData).sort();
-            const revenues = months.map(month => revenueData[month]);
-            
-            const maxRevenue = Math.max(...revenues, 1);
-            
-            chartElement.innerHTML = `
-                <div style="width: 100%; text-align: center;">
-                    <h3 style="margin-bottom: 20px; color: var(--admin-primary);">Revenue by Month</h3>
-                    <div style="display: flex; justify-content: center; align-items: flex-end; height: 150px; gap: 10px;">
-                        ${months.map((month, index) => {
-                            const height = (revenues[index] / maxRevenue) * 100;
-                            return `
-                                <div style="display: flex; flex-direction: column; align-items: center;">
-                                    <div style="width: 30px; background: var(--admin-warning); height: ${height}px; border-radius: 5px;"></div>
-                                    <div style="margin-top: 10px; color: var(--admin-text-muted); font-size: 0.8rem;">${month}</div>
-                                    <div style="margin-top: 5px; color: var(--admin-text); font-size: 0.7rem;">${revenues[index].toLocaleString()} TZS</div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                    <p style="margin-top: 20px; color: var(--admin-text-muted);">Total revenue: ${Object.values(revenueData).reduce((a, b) => a + b, 0).toLocaleString()} TZS</p>
-                </div>
-            `;
-        }
-
-        // ==================== UTILITY FUNCTIONS ====================
-        function showLoading(message) {
-            if (message) {
-                loadingOverlay.innerHTML = `<div class="loader"></div><div style="margin-top: 20px; color: var(--admin-text);">${message}</div>`;
-            }
-            loadingOverlay.classList.add('active');
-        }
-
-        function hideLoading() {
-            loadingOverlay.classList.remove('active');
-            loadingOverlay.innerHTML = '<div class="loader"></div>';
-        }
-
-        function showNotification(message, type) {
-            notification.textContent = message;
-            notification.className = `notification ${type} show`;
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        async function exportData() {
-            showLoading('Preparing export...');
-            
-            try {
-                // Get all data
-                const [users, codes, resellers, payments, settings] = await Promise.all([
-                    db.collection('users').get(),
-                    db.collection('premiumCodes').limit(1000).get(),
-                    db.collection('resellers').get(),
-                    db.collection('payments').get(),
-                    db.collection('settings').doc('app').get()
-                ]);
-                
-                // Format data
-                const exportData = {
-                    exportDate: new Date().toISOString(),
-                    exportedBy: currentAdmin.email,
-                    users: users.docs.map(doc => ({ id: doc.id, ...doc.data() })),
-                    codes: codes.docs.map(doc => ({ id: doc.id, ...doc.data() })),
-                    resellers: resellers.docs.map(doc => ({ id: doc.id, ...doc.data() })),
-                    payments: payments.docs.map(doc => ({ id: doc.id, ...doc.data() })),
-                    settings: settings.exists ? settings.data() : {}
-                };
-                
-                // Create download link
-                const dataStr = JSON.stringify(exportData, null, 2);
-                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-                const exportFileDefaultName = `mines-predictor-export-${Date.now()}.json`;
-                
-                const linkElement = document.createElement('a');
-                linkElement.setAttribute('href', dataUri);
-                linkElement.setAttribute('download', exportFileDefaultName);
-                linkElement.click();
-                
-                showNotification('Data exported successfully!', 'success');
-                
-            } catch (error) {
-                console.error('Error exporting data:', error);
-                showNotification('Failed to export data', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-    </script>
 </body>
 </html>
