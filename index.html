@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
   <title>StanyTech Online Services Boost</title>
-  <meta name="description" content="Boost Your WhatsApp Status Views">
+  <meta name="description" content="Boost Your WhatsApp Status Views - Create or Join Teams">
   <meta name="theme-color" content="#f97316">
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/stanytz378/stanyimagesservers/refs/heads/main/C2585B79-C829-4452-9FBD-405B5AB8019B.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
@@ -13,192 +13,312 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
     body { font-family: 'Inter', sans-serif; background: #0a0c15; color: #e2e8f0; min-height: 100vh; }
+    img { -webkit-user-drag: none; pointer-events: auto; }
     .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
-    .glass-card { @extend .glass; border-radius: 28px; }
+    .glass-card { @extend .glass; border-radius: 24px; }
+    .section-card { background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; overflow: hidden; transition: all 0.3s; }
+    .section-card:hover { border-color: rgba(249,115,22,0.3); }
+    .section-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .section-body { padding: 20px; }
     .btn-gradient { background: linear-gradient(135deg, #f97316, #8b5cf6); transition: all 0.3s ease; }
     .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(249,115,22,0.5); }
+    .btn-gradient:active { transform: translateY(0); }
     .btn-whatsapp { background: #25D366; transition: all 0.3s ease; }
     .btn-whatsapp:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37,211,102,0.4); }
     .btn-outline { background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s; }
     .btn-outline:hover { background: rgba(249,115,22,0.15); border-color: #f97316; color: #f97316; }
-    .stat-card { background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 16px; transition: all 0.3s; }
-    .stat-card:hover { transform: translateY(-3px); border-color: #f97316; }
-    .badge { padding: 4px 10px; border-radius: 50px; font-size: 0.7rem; font-weight: 600; }
+    .btn-sm { padding: 8px 16px; font-size: 0.75rem; border-radius: 12px; }
+    .team-card { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 16px; transition: all 0.3s; cursor: pointer; }
+    .team-card:hover { border-color: #f97316; transform: translateY(-2px); }
+    .team-card.selected { border-color: #10b981; background: rgba(16,185,129,0.1); }
+    .team-card.full { opacity: 0.5; cursor: not-allowed; }
+    .team-card.own { border-color: #f97316; background: rgba(249,115,22,0.05); }
+    .progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #f97316, #8b5cf6); border-radius: 4px; transition: width 0.5s ease; }
+    .badge { padding: 5px 12px; border-radius: 50px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
     .badge-active { background: rgba(16,185,129,0.2); color: #10b981; }
     .badge-full { background: rgba(239,68,68,0.2); color: #ef4444; }
-    .file-card { background: rgba(15,23,42,0.7); border: 2px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 16px; transition: all 0.3s; cursor: pointer; }
-    .file-card:hover { border-color: #f97316; transform: translateY(-2px); }
-    .file-card.selected { border-color: #10b981; background: rgba(16,185,129,0.1); }
-    .file-card.full { opacity: 0.6; cursor: not-allowed; }
-    .progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 8px; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, #f97316, #8b5cf6); border-radius: 3px; transition: width 0.3s; }
-    input, select, textarea { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 14px; color: white; width: 100%; outline: none; transition: 0.2s; font-size: 0.9rem; }
-    input:focus, select:focus, textarea:focus { border-color: #f97316; box-shadow: 0 0 0 2px rgba(249,115,22,0.25); }
-    label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 5px; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 15px; }
-    .modal.active { display: flex; }
+    .badge-owner { background: rgba(249,115,22,0.2); color: #f97316; }
+    .badge-ready { background: rgba(6,182,212,0.2); color: #06b6d4; }
+    input, select { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px 16px; color: white; width: 100%; outline: none; transition: 0.2s; font-size: 0.9rem; }
+    input:focus, select:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.2); }
+    input::placeholder { color: #64748b; }
+    label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; font-weight: 500; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal.active { display: flex; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .page { display: none; animation: slideUp 0.3s ease; }
     .page.active { display: block; }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .hidden { display: none !important; }
     .text-orange { color: #f97316; }
-    .loader { width: 32px; height: 32px; border: 3px solid rgba(249,115,22,0.3); border-top-color: #f97316; border-radius: 50%; animation: spin 1s linear infinite; }
+    .loader { width: 36px; height: 36px; border: 3px solid rgba(249,115,22,0.3); border-top-color: #f97316; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
-    .floating-btn { position: fixed; bottom: 20px; right: 20px; z-index: 100; border-radius: 50px; padding: 12px 20px; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-    .channel-banner { background: linear-gradient(135deg, #25D366, #128C7E); padding: 12px; border-radius: 16px; margin-bottom: 16px; text-align: center; }
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: #1a1a2e; }
-    ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 10px; }
-    @media (max-width: 768px) { .glass-card { border-radius: 20px; } .floating-btn span { display: none; } }
+    .tab-btn { padding: 10px 20px; font-size: 0.8rem; font-weight: 600; border-radius: 14px; transition: all 0.2s; cursor: pointer; }
+    .tab-btn.active { background: rgba(249,115,22,0.2); color: #f97316; }
+    .tab-btn:hover { background: rgba(255,255,255,0.05); }
+    .floating-btn { position: fixed; bottom: 20px; right: 20px; z-index: 100; border-radius: 50px; padding: 14px 20px; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+    .tip-box { background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); border-radius: 14px; padding: 12px 16px; }
+    .channel-banner { background: linear-gradient(135deg, #25D366, #128C7E); padding: 10px 14px; border-radius: 14px; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(249,115,22,0.5); border-radius: 4px; }
+    @media (max-width: 768px) {
+      .glass-card, .section-card { border-radius: 20px; }
+      .floating-btn span { display: none; }
+      .section-header, .section-body { padding: 16px; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- Channel Banner Always Visible -->
-  <div class="fixed top-0 left-0 right-0 z-50 px-3 pt-3 pb-0 pointer-events-none">
-    <div class="channel-banner pointer-events-auto max-w-md mx-auto">
-      <p class="text-white font-semibold text-sm mb-2"><i class="fab fa-whatsapp mr-1"></i> Follow Our Channel for Updates</p>
-      <a href="https://whatsapp.com/channel/0029Vb7fzu4EwEjmsD4Tzs1p" target="_blank" class="inline-flex items-center gap-2 bg-white text-green-600 px-4 py-2 rounded-full font-semibold text-sm hover:scale-105 transition">
-        <i class="fas fa-external-link-alt"></i> Follow Now
-      </a>
-    </div>
-  </div>
-
-  <!-- Welcome / Login -->
-  <div id="welcomePage" class="page active min-h-screen flex items-center justify-center p-4 pt-24">
-    <div class="glass-card p-6 max-w-md w-full text-center">
-      <div class="w-20 h-20 rounded-2xl mx-auto mb-4 overflow-hidden border-2 border-orange-500">
-        <img src="https://raw.githubusercontent.com/stanytz378/stanyimagesservers/refs/heads/main/C2585B79-C829-4452-9FBD-405B5AB8019B.png" class="w-full h-full object-cover">
+  <!-- ===== AUTH PAGE ===== -->
+  <div id="authPage" class="page active min-h-screen flex items-center justify-center p-4">
+    <div class="glass-card p-6 max-w-md w-full">
+      <div class="text-center mb-6">
+        <div class="w-20 h-20 rounded-2xl mx-auto mb-4 overflow-hidden border-2 border-orange-500">
+          <img src="https://raw.githubusercontent.com/stanytz378/stanyimagesservers/refs/heads/main/C2585B79-C829-4452-9FBD-405B5AB8019B.png" class="w-full h-full object-cover">
+        </div>
+        <h1 class="text-2xl font-bold text-white">StanyTech Boost</h1>
+        <p class="text-orange-400 text-sm mt-1">Create or Join Teams</p>
       </div>
-      <h1 class="text-xl font-bold text-white mb-1">StanyTech Online</h1>
-      <p class="text-orange-400 text-sm mb-2">Services Boost</p>
-      <p class="text-gray-400 text-xs mb-4">Boost Your WhatsApp Status Views</p>
-      
-      <div class="bg-green-500/10 border border-green-500/30 rounded-xl p-3 mb-4">
-        <p class="text-green-400 text-xs mb-2"><i class="fas fa-info-circle mr-1"></i> First, Follow Our Channel</p>
-        <a href="https://whatsapp.com/channel/0029Vb7fzu4EwEjmsD4Tzs1p" target="_blank" class="btn-whatsapp text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center gap-2">
-          <i class="fab fa-whatsapp"></i> Follow Channel
+
+      <!-- Channel Banner -->
+      <div class="channel-banner mb-5 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-white">
+          <i class="fab fa-whatsapp text-xl"></i>
+          <div>
+            <p class="font-semibold text-sm">Follow Our Channel</p>
+            <p class="text-[10px] text-white/70">Stay updated with new features</p>
+          </div>
+        </div>
+        <a href="https://whatsapp.com/channel/0029Vb7fzu4EwEjmsD4Tzs1p" target="_blank" class="bg-white text-green-600 px-3 py-1.5 rounded-full text-xs font-bold">
+          Follow <i class="fas fa-arrow-right ml-1"></i>
         </a>
       </div>
-      
-      <div id="loginLoader" class="hidden my-3"><div class="loader mx-auto"></div></div>
-      
-      <form id="loginForm" onsubmit="App.login(event)" class="space-y-3">
-        <input type="text" id="loginPhone" placeholder="WhatsApp Number (e.g., +255787069580)" required pattern="^\+?[0-9]{10,15}$">
-        <button type="submit" class="w-full btn-gradient text-white font-medium py-2.5 rounded-xl">
-          <i class="fas fa-sign-in-alt mr-1"></i> Continue
-        </button>
-      </form>
-      <p id="loginMsg" class="text-red-400 text-xs mt-2 hidden"></p>
-      <p class="text-gray-500 text-[10px] mt-3">By continuing, you agree to our terms</p>
-    </div>
-  </div>
 
-  <!-- Register -->
-  <div id="registerPage" class="page min-h-screen flex items-center justify-center p-4 pt-24">
-    <div class="glass-card p-6 max-w-md w-full">
-      <div class="text-center mb-4">
-        <h2 class="text-lg font-bold text-white">Create Account</h2>
-        <p class="text-gray-400 text-xs">Complete your registration</p>
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-5 p-1 bg-gray-800/50 rounded-2xl">
+        <div class="tab-btn active flex-1 text-center" data-tab="login" onclick="Auth.switchTab('login')">Login</div>
+        <div class="tab-btn flex-1 text-center" data-tab="register" onclick="Auth.switchTab('register')">Register</div>
       </div>
-      <form id="registerForm" onsubmit="App.register(event)" class="space-y-3">
-        <input type="text" id="regUsername" placeholder="Username" required maxlength="30">
-        <input type="email" id="regEmail" placeholder="Email (for VCF download)" required>
-        <input type="text" id="regPhone" readonly class="bg-gray-800">
-        <div class="bg-orange-500/10 border border-orange-500/30 rounded-xl p-3">
-          <p class="text-orange-400 text-xs mb-2"><i class="fas fa-users mr-1"></i> You can add up to 5 numbers</p>
-          <p class="text-gray-400 text-[10px]">These numbers will receive status views</p>
-        </div>
-        <button type="submit" class="w-full btn-gradient text-white font-medium py-2.5 rounded-xl">
-          <i class="fas fa-user-plus mr-1"></i> Complete Registration
+
+      <!-- Login Form -->
+      <form id="loginForm" class="space-y-3">
+        <input type="text" id="loginPhone" placeholder="WhatsApp Number (+255...)" required pattern="^\+?[0-9]{10,15}$">
+        <button type="submit" class="w-full btn-gradient text-white py-3 rounded-xl font-semibold">
+          <i class="fas fa-sign-in-alt mr-2"></i> Login
         </button>
       </form>
-      <p id="regMsg" class="text-red-400 text-xs mt-2 hidden"></p>
+
+      <!-- Register Form -->
+      <form id="registerForm" class="space-y-3 hidden">
+        <input type="text" id="regUsername" placeholder="Username *" required maxlength="30">
+        <input type="text" id="regPhone" placeholder="WhatsApp Number (+255...)" required pattern="^\+?[0-9]{10,15}$">
+        <input type="email" id="regEmail" placeholder="Email (Recommended for imports)">
+        <div class="tip-box flex items-start gap-2">
+          <i class="fas fa-lightbulb text-orange-400 mt-0.5"></i>
+          <p class="text-xs text-orange-300/80">Using email helps when importing contacts to your phone. Highly recommended!</p>
+        </div>
+        <button type="submit" class="w-full btn-gradient text-white py-3 rounded-xl font-semibold">
+          <i class="fas fa-user-plus mr-2"></i> Create Account
+        </button>
+      </form>
+
+      <p id="authMsg" class="text-red-400 text-xs mt-3 text-center hidden"></p>
+      <p class="text-gray-600 text-[10px] mt-4 text-center">By continuing, you agree to our terms of service</p>
     </div>
   </div>
 
-  <!-- User Dashboard -->
-  <div id="userDashboard" class="page hidden">
-    <header class="glass fixed top-14 left-0 right-0 z-40 px-3 py-3">
-      <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <!-- ===== DASHBOARD ===== -->
+  <div id="dashboardPage" class="page hidden">
+    <!-- Top Nav -->
+    <nav class="fixed top-0 left-0 right-0 z-40 glass" style="border-radius:0; border-bottom:1px solid rgba(255,255,255,0.08);">
+      <div class="max-w-7xl mx-auto px-3 py-2.5 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <img src="https://raw.githubusercontent.com/stanytz378/stanyimagesservers/refs/heads/main/C2585B79-C829-4452-9FBD-405B5AB8019B.png" class="w-8 h-8 rounded-lg object-cover border border-orange-500">
           <div>
             <p class="font-bold text-sm text-white">StanyTech Boost</p>
-            <p id="userNameDisplay" class="text-[10px] text-gray-400">User</p>
+            <p id="navUsername" class="text-[10px] text-gray-400">-</p>
           </div>
         </div>
-        <button onclick="App.logout()" class="text-red-400 hover:text-red-300 text-xs"><i class="fas fa-sign-out-alt"></i></button>
-      </div>
-    </header>
-
-    <main class="pt-36 pb-20 px-3 max-w-7xl mx-auto">
-      
-      <!-- File Selection Section - NOW PROMINENT -->
-      <section id="fileSelection" class="mb-6">
-        <div class="glass-card p-4 mb-4">
-          <h3 class="font-bold text-sm mb-2 text-white"><i class="fas fa-folder-open text-orange-500 mr-1"></i> Choose Contact File</h3>
-          <p class="text-gray-400 text-xs">Select a file to join. Each file holds up to 1000 contacts.</p>
-        </div>
-        <div id="filesList" class="space-y-3">
-          <div class="text-center py-8 text-gray-400 text-xs"><div class="loader mx-auto mb-3"></div>Loading available files...</div>
-        </div>
-      </section>
-
-      <!-- My Numbers Section (Shows after file selection) -->
-      <section id="myNumbers" class="hidden mb-6">
-        <div class="glass-card p-4 mb-4">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="font-bold text-sm text-white"><i class="fas fa-phone text-orange-500 mr-1"></i> My Numbers</h3>
-            <span class="badge badge-active"><span id="numberCount">0</span>/5 Added</span>
-          </div>
-          <p class="text-gray-400 text-xs">Add up to 5 WhatsApp numbers to receive status views</p>
-        </div>
-        
-        <div id="numbersList" class="space-y-2 mb-4"></div>
-        
-        <button onclick="User.addNumber()" id="addNumberBtn" class="w-full btn-gradient text-white py-2.5 rounded-xl text-sm font-semibold mb-4">
-          <i class="fas fa-plus mr-1"></i> Add New Number
+        <button onclick="App.logout()" class="text-red-400 hover:text-red-300 text-xs">
+          <i class="fas fa-sign-out-alt"></i>
         </button>
-        
-        <!-- Download VCF -->
-        <div class="glass-card p-4 border-2 border-green-500/30">
-          <div class="flex items-center gap-2 mb-2">
-            <i class="fas fa-download text-green-400"></i>
-            <p class="font-semibold text-sm text-white">Download All Contacts</p>
-          </div>
-          <p class="text-gray-400 text-xs mb-3">Import this VCF file to your phone to save all contacts at once</p>
-          <button onclick="User.downloadVCF()" class="w-full btn-whatsapp text-white py-2.5 rounded-xl text-sm font-semibold">
-            <i class="fas fa-file-import mr-1"></i> Download VCF File
-          </button>
-        </div>
-      </section>
-
-      <!-- Stats -->
-      <section class="grid grid-cols-2 gap-3 mb-6">
-        <div class="stat-card">
-          <p class="text-gray-400 text-xs">My Numbers</p>
-          <p id="statMyNumbers" class="text-2xl font-bold text-orange-400">0</p>
-        </div>
-        <div class="stat-card">
-          <p class="text-gray-400 text-xs">File Progress</p>
-          <p id="statFileProgress" class="text-2xl font-bold text-purple-400">0/1000</p>
-        </div>
-      </section>
-
-      <!-- How It Works -->
-      <div class="glass-card p-4">
-        <h4 class="font-bold text-sm mb-3 text-white"><i class="fas fa-lightbulb text-yellow-500 mr-1"></i> How It Works</h4>
-        <ol class="text-gray-400 text-xs space-y-2 list-decimal list-inside">
-          <li>Choose an available contact file above</li>
-          <li>Add your WhatsApp numbers (max 5)</li>
-          <li>Download the VCF file with all contacts</li>
-          <li>Import the VCF to your phone contacts</li>
-          <li>Save the numbers and watch your status views grow! 🚀</li>
-        </ol>
       </div>
+    </nav>
+
+    <main class="pt-16 pb-24 px-3 max-w-7xl mx-auto space-y-6">
+
+      <!-- SECTION 1: CREATE YOUR TEAM -->
+      <section id="sectionCreate" class="section-card">
+        <div class="section-header flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+              <i class="fas fa-folder-plus text-orange-500"></i>
+            </div>
+            <div>
+              <h2 class="font-bold text-white">Create Your Team</h2>
+              <p class="text-xs text-gray-400">Build your contact team to share</p>
+            </div>
+          </div>
+        </div>
+        <div class="section-body space-y-4">
+          <!-- Current Team Info (if exists) -->
+          <div id="myTeamInfo" class="hidden">
+            <div class="bg-gray-800/50 rounded-xl p-4 mb-4">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <p class="font-bold text-white text-lg" id="teamName">-</p>
+                  <p class="text-xs text-gray-400">Team ID: <code id="teamId" class="bg-gray-700 px-2 py-0.5 rounded">-</code></p>
+                </div>
+                <span class="badge badge-owner">YOUR TEAM</span>
+              </div>
+              <div class="progress-bar mb-2">
+                <div id="teamProgress" class="progress-fill" style="width:0%"></div>
+              </div>
+              <p class="text-xs text-gray-400"><span id="teamCount">0</span> / <span id="teamLimit">1000</span> members joined</p>
+            </div>
+
+            <!-- Share Section -->
+            <div class="space-y-3">
+              <p class="text-sm font-semibold text-white"><i class="fas fa-share-alt text-orange-500 mr-1"></i> Share Your Team</p>
+              <div class="flex gap-2">
+                <input type="text" id="shareLink" readonly class="bg-gray-800 text-xs py-2">
+                <button onclick="Teams.copyLink()" class="btn-gradient text-white px-3 rounded-xl whitespace-nowrap text-sm">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="Teams.shareWhatsApp()" class="flex-1 btn-whatsapp text-white py-2 rounded-xl text-sm font-semibold">
+                  <i class="fab fa-whatsapp mr-1"></i> Share via WhatsApp
+                </button>
+                <button onclick="Teams.shareGeneric()" class="flex-1 btn-outline py-2 rounded-xl text-sm">
+                  <i class="fas fa-share mr-1"></i> Share
+                </button>
+              </div>
+            </div>
+
+            <!-- Download Section -->
+            <div id="downloadSection" class="mt-4 hidden">
+              <div class="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="fas fa-check-circle text-green-400"></i>
+                  <p class="font-semibold text-sm text-white">Team Ready for Download!</p>
+                </div>
+                <p class="text-xs text-gray-400 mb-3">Your team has reached the target. Download all contacts now!</p>
+                <button onclick="Teams.downloadVCF()" class="w-full btn-whatsapp text-white py-2.5 rounded-xl font-semibold">
+                  <i class="fas fa-file-import mr-2"></i> Download VCF File
+                </button>
+              </div>
+            </div>
+
+            <!-- Not Ready Info -->
+            <div id="notReadyInfo" class="mt-4">
+              <div class="tip-box">
+                <div class="flex items-start gap-2">
+                  <i class="fas fa-info-circle text-orange-400 mt-0.5"></i>
+                  <p class="text-xs text-orange-300/80">Download will be available when your team reaches <span id="targetCount">1000</span> members. Share your link to grow the team!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Create Form (if no team) -->
+          <form id="createTeamForm" class="space-y-3 hidden">
+            <div class="bg-orange-500/10 border border-orange-500/30 rounded-xl p-3 mb-2">
+              <p class="text-orange-400 text-xs"><i class="fas fa-info-circle mr-1"></i> Create a team and share it with others. They'll join by clicking your link.</p>
+            </div>
+            <div>
+              <label>Team Name *</label>
+              <input type="text" id="newTeamName" required placeholder="e.g., stany, boostteam" pattern="^[a-zA-Z0-9_-]+$" maxlength="30">
+              <p class="text-[10px] text-gray-500 mt-1">Letters, numbers, hyphens only. This will be your team's unique ID.</p>
+            </div>
+            <div>
+              <label>Member Limit *</label>
+              <input type="number" id="newTeamLimit" required min="100" max="10000" value="1000">
+            </div>
+            <button type="submit" class="w-full btn-gradient text-white py-3 rounded-xl font-semibold">
+              <i class="fas fa-plus mr-2"></i> Create Team
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- SECTION 2: JOIN ACTIVE TEAM -->
+      <section id="sectionJoin" class="section-card">
+        <div class="section-header flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+              <i class="fas fa-users text-purple-500"></i>
+            </div>
+            <div>
+              <h2 class="font-bold text-white">Active Teams</h2>
+              <p class="text-xs text-gray-400">Join a team to boost your status</p>
+            </div>
+          </div>
+          <span id="teamCountBadge" class="badge badge-active">0 Teams</span>
+        </div>
+        <div class="section-body">
+          <!-- Auto-join banner (when link has ?join=xxx) -->
+          <div id="autoJoinBanner" class="hidden mb-4 bg-purple-500/10 border border-purple-500/30 rounded-xl p-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-semibold text-purple-300"><i class="fas fa-hand-pointer mr-1"></i> Someone invited you!</p>
+                <p class="text-xs text-gray-400 mt-0.5">Team: <span id="autoJoinTeamName" class="text-purple-400 font-semibold">-</span></p>
+              </div>
+              <button onclick="Teams.autoJoin()" class="btn-gradient text-white px-4 py-2 rounded-xl text-sm font-semibold">Join Now</button>
+            </div>
+          </div>
+
+          <!-- Teams List -->
+          <div id="teamsList" class="space-y-3">
+            <div class="text-center py-8 text-gray-400 text-xs"><div class="loader mx-auto mb-3"></div>Loading teams...</div>
+          </div>
+
+          <!-- Already Joined -->
+          <div id="joinedTeamInfo" class="hidden mt-4 bg-green-500/10 border border-green-500/30 rounded-xl p-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-semibold text-green-400"><i class="fas fa-check-circle mr-1"></i> You Joined</p>
+                <p id="joinedTeamName" class="text-xs text-gray-400">Team: -</p>
+              </div>
+              <span class="badge badge-active">Active</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: MY NUMBERS -->
+      <section id="sectionNumbers" class="section-card">
+        <div class="section-header flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center">
+              <i class="fas fa-phone text-teal-500"></i>
+            </div>
+            <div>
+              <h2 class="font-bold text-white">My Numbers</h2>
+              <p class="text-xs text-gray-400">Add up to 5 numbers to receive views</p>
+            </div>
+          </div>
+          <span id="numCountBadge" class="badge badge-active">0/5</span>
+        </div>
+        <div class="section-body space-y-3">
+          <div id="numbersList" class="space-y-2">
+            <div class="text-center py-6 text-gray-400 text-xs">Join a team first to add numbers</div>
+          </div>
+          <button id="addNumberBtn" onclick="Numbers.openModal()" class="w-full btn-gradient text-white py-2.5 rounded-xl font-semibold hidden">
+            <i class="fas fa-plus mr-2"></i> Add Number
+          </button>
+          <div class="tip-box flex items-start gap-2">
+            <i class="fas fa-shield-alt text-teal-400 mt-0.5"></i>
+            <p class="text-xs text-teal-300/80">Your numbers are private. They're only used for the VCF file download.</p>
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <!-- Floating Support -->
@@ -208,301 +328,548 @@
     </a>
   </div>
 
-  <!-- Add Number Modal -->
-  <div id="addNumberModal" class="modal">
-    <div class="glass-card p-4 max-w-sm w-full">
-      <div class="flex justify-between items-center mb-3">
+  <!-- ===== ADD NUMBER MODAL ===== -->
+  <div id="numberModal" class="modal">
+    <div class="glass-card p-5 max-w-sm w-full">
+      <div class="flex justify-between items-center mb-4">
         <h3 class="font-bold text-white">Add Number</h3>
-        <button onclick="User.closeModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
+        <button onclick="Numbers.closeModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
       </div>
-      <form onsubmit="User.saveNumber(event)" class="space-y-3">
+      <form onsubmit="Numbers.save(event)" class="space-y-3">
         <input type="text" id="newNumber" placeholder="WhatsApp Number (+255...)" required pattern="^\+?[0-9]{10,15}$">
-        <button type="submit" class="w-full btn-gradient text-white py-2 rounded-xl text-sm font-semibold">Save Number</button>
+        <button type="submit" class="w-full btn-gradient text-white py-2.5 rounded-xl font-semibold">Save Number</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== JOIN TEAM MODAL ===== -->
+  <div id="joinModal" class="modal">
+    <div class="glass-card p-5 max-w-sm w-full">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-white">Join Team</h3>
+        <button onclick="Teams.closeJoinModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
+      </div>
+      <div class="mb-4">
+        <p class="text-sm text-gray-400 mb-2">You're about to join:</p>
+        <p id="joinTeamName" class="font-bold text-xl text-white">-</p>
+        <p id="joinTeamStats" class="text-xs text-gray-400 mt-1">-</p>
+      </div>
+      <form onsubmit="Teams.confirmJoin(event)" class="space-y-3">
+        <p class="text-xs text-gray-400"><i class="fas fa-info-circle mr-1"></i> Add at least 1 number to complete joining:</p>
+        <input type="text" id="joinNumber1" placeholder="Number 1 *" required pattern="^\+?[0-9]{10,15}$">
+        <input type="text" id="joinNumber2" placeholder="Number 2 (optional)" pattern="^\+?[0-9]{10,15}$">
+        <input type="text" id="joinNumber3" placeholder="Number 3 (optional)" pattern="^\+?[0-9]{10,15}$">
+        <button type="submit" class="w-full btn-gradient text-white py-2.5 rounded-xl font-semibold">
+          <i class="fas fa-sign-in-alt mr-2"></i> Join Team
+        </button>
       </form>
     </div>
   </div>
 
   <script>
+    // ===== CONFIG =====
     const firebaseConfig = { apiKey: "AIzaSyBhF_jesV0dMhy3cEgehrWlT_mZOtKXySE", authDomain: "stanytechzone.firebaseapp.com", projectId: "stanytechzone", storageBucket: "stanytechzone.firebasestorage.app", messagingSenderId: "182249230489", appId: "1:182249230489:web:c87d89de113b6714c46808" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    
     let currentUser = null;
+    let allTeams = [];
+    let selectedTeamId = null;
+    let autoJoinTeam = null;
 
+    // ===== UTILS =====
     const U = {
       $: id => document.getElementById(id),
       show: id => U.$(id)?.classList.remove('hidden'),
       hide: id => U.$(id)?.classList.add('hidden'),
       page: name => { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); U.$(name)?.classList.add('active'); },
-      msg: (id,text,type='error') => { const el=U.$(id); if(el){ el.textContent=text; el.className=`text-xs mt-2 ${type==='error'?'text-red-400':type==='success'?'text-green-400':'text-gray-400'}`; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'),3000); }},
-      ok: txt => window.confirm(txt)
+      msg: (id, text, type='error') => { const el=U.$(id); if(el){ el.textContent=text; el.className=`text-xs mt-3 text-center ${type==='error'?'text-red-400':type==='success'?'text-green-400':'text-gray-400'}`; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'),4000); }},
+      ok: txt => window.confirm(txt),
+      getBaseUrl: () => { const u=window.location; return u.origin+u.pathname; }
     };
 
-    const App = {
+    // ===== DISABLE RIGHT CLICK & KEY COMBINATIONS =====
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if(e.ctrlKey && (e.key==='u'||e.key==='U'||e.key==='s'||e.key==='S'||e.key==='c'||e.key==='C')) e.preventDefault();
+      if(e.key==='F12') e.preventDefault();
+      if(e.ctrlKey && e.shiftKey && (e.key==='I'||e.key==='i'||e.key==='J'||e.key==='j')) e.preventDefault();
+    });
+
+    // ===== AUTH =====
+    const Auth = {
       init: async () => {
         const session = localStorage.getItem('stanytech_user');
-        if(session){ 
-          currentUser = JSON.parse(session); 
-          U.page('userDashboard'); 
-          await User.load(); 
-        } else { 
-          U.page('welcomePage'); 
+        if(session){
+          try {
+            currentUser = JSON.parse(session);
+            // Verify user still exists in DB
+            const doc = await db.collection('users').doc(currentUser.id).get();
+            if(doc.exists){
+              currentUser = { id: doc.id, ...doc.data() };
+              localStorage.setItem('stanytech_user', JSON.stringify(currentUser));
+              App.showDashboard();
+              return;
+            }
+          } catch(e){}
         }
+        U.page('authPage');
+        // Check URL for auto-join
+        const params = new URLSearchParams(window.location.search);
+        autoJoinTeam = params.get('join');
       },
-      
+      switchTab: tab => {
+        document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
+        document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+        if(tab==='login'){ U.show('loginForm'); U.hide('registerForm'); }
+        else { U.hide('loginForm'); U.show('registerForm'); }
+        U.$('authMsg')?.classList.add('hidden');
+      },
       login: async e => {
         e.preventDefault();
         const phone = U.$('loginPhone').value.trim();
-        U.show('loginLoader');
         try {
-          const users = await db.collection('users').where('phone','==',phone).get();
-          if(users.empty){ 
-            U.$('regPhone').value = phone; 
-            U.page('registerPage'); 
+          const snap = await db.collection('users').where('phone','==',phone).limit(1).get();
+          if(snap.empty){
+            U.msg('authMsg','Phone not found. Please register first.');
+            Auth.switchTab('register');
+            U.$('regPhone').value = phone;
           } else {
-            const user = users.docs[0].data();
-            currentUser = { phone, ...user, id: users.docs[0].id };
+            const doc = snap.docs[0];
+            currentUser = { id: doc.id, ...doc.data() };
             localStorage.setItem('stanytech_user', JSON.stringify(currentUser));
-            U.page('userDashboard'); 
-            await User.load();
+            App.showDashboard();
           }
-        } catch(err){ U.msg('loginMsg','Error: '+err.message); }
-        U.hide('loginLoader');
+        } catch(err){ U.msg('authMsg','Error: '+err.message); }
       },
-      
       register: async e => {
         e.preventDefault();
         const username = U.$('regUsername').value.trim();
+        const phone = U.$('regPhone').value.trim();
         const email = U.$('regEmail').value.trim();
-        const phone = U.$('regPhone').value;
         try {
-          const res = await db.collection('users').add({ username, email, phone, numbers: [], fileChoice: null, createdAt: new Date() });
-          currentUser = { username, email, phone, numbers: [], fileChoice: null, id: res.id };
+          // Check if phone exists
+          const snap = await db.collection('users').where('phone','==',phone).limit(1).get();
+          if(!snap.empty){
+            U.msg('authMsg','This phone is already registered. Login instead.');
+            Auth.switchTab('login');
+            U.$('loginPhone').value = phone;
+            return;
+          }
+          const docRef = await db.collection('users').add({ username, phone, email, numbers: [], joinedTeam: null, createdAt: new Date() });
+          currentUser = { id: docRef.id, username, phone, email, numbers: [], joinedTeam: null };
           localStorage.setItem('stanytech_user', JSON.stringify(currentUser));
-          U.page('userDashboard'); 
-          await User.load();
-        } catch(err){ U.msg('regMsg','Error: '+err.message); }
-      },
-      
-      logout: () => { localStorage.removeItem('stanytech_user'); currentUser = null; location.reload(); }
+          App.showDashboard();
+        } catch(err){ U.msg('authMsg','Error: '+err.message); }
+      }
     };
 
-    const User = {
-      load: async () => {
-        if(!currentUser) return;
-        U.$('userNameDisplay').textContent = currentUser.username || 'User';
-        U.$('statMyNumbers').textContent = (currentUser.numbers||[]).length;
-        U.$('numberCount').textContent = (currentUser.numbers||[]).length;
+    // ===== APP =====
+    const App = {
+      showDashboard: async () => {
+        U.page('dashboardPage');
+        U.$('navUsername').textContent = currentUser.username || currentUser.phone;
+        await Teams.loadAll();
+        Teams.renderMyTeam();
+        Teams.renderTeamsList();
+        Numbers.render();
         
-        // Load available files FIRST - this is what user sees
-        await User.loadFiles();
-        
-        // Then check if user has already selected a file
-        if(currentUser.fileChoice){
-          U.hide('fileSelection');
-          U.show('myNumbers');
-          await User.loadNumbers();
-          await User.updateFileProgress();
-        } else {
-          U.show('fileSelection');
-          U.hide('myNumbers');
+        // Handle auto-join from URL
+        if(autoJoinTeam){
+          const team = allTeams.find(t=>t.id===autoJoinTeam || t.name?.toLowerCase()===autoJoinTeam.toLowerCase());
+          if(team && team.id !== currentUser.joinedTeam){
+            U.show('autoJoinBanner');
+            U.$('autoJoinTeamName').textContent = team.name;
+            selectedTeamId = team.id;
+          }
         }
       },
-      
-      // ===== LOAD FILES - THIS IS THE KEY FUNCTION =====
-      loadFiles: async () => {
-        const container = U.$('filesList');
-        container.innerHTML = '<div class="text-center py-8 text-gray-400 text-xs"><div class="loader mx-auto mb-3"></div>Loading available files...</div>';
+      logout: () => {
+        if(!U.ok('Logout?')) return;
+        localStorage.removeItem('stanytech_user');
+        currentUser = null;
+        location.href = U.getBaseUrl();
+      }
+    };
+
+    // ===== TEAMS =====
+    const Teams = {
+      loadAll: async () => {
+        try {
+          const snap = await db.collection('teams').where('isActive','==',true).orderBy('createdAt','desc').get();
+          allTeams = snap.docs.map(d=>({id:d.id, ...d.data()}));
+        } catch(err){ console.error(err); }
+      },
+      renderMyTeam: () => {
+        if(currentUser?.createdTeamId){
+          // Show team info
+          U.hide('createTeamForm');
+          U.show('myTeamInfo');
+          
+          const team = allTeams.find(t=>t.id===currentUser.createdTeamId);
+          if(team){
+            U.$('teamName').textContent = team.name;
+            U.$('teamId').textContent = team.id;
+            U.$('teamCount').textContent = team.memberCount || 0;
+            U.$('teamLimit').textContent = team.maxMembers || 1000;
+            U.$('targetCount').textContent = team.maxMembers || 1000;
+            const pct = Math.min(100, Math.round(((team.memberCount||0)/(team.maxMembers||1000))*100));
+            U.$('teamProgress').style.width = pct+'%';
+            U.$('shareLink').value = U.getBaseUrl()+'?join='+team.id;
+            
+            // Check if ready for download
+            if((team.memberCount||0) >= (team.maxMembers||1000)){
+              U.show('downloadSection');
+              U.hide('notReadyInfo');
+            } else {
+              U.hide('downloadSection');
+              U.show('notReadyInfo');
+            }
+          }
+        } else {
+          U.show('createTeamForm');
+          U.hide('myTeamInfo');
+        }
+      },
+      create: async e => {
+        e.preventDefault();
+        const name = U.$('newTeamName').value.trim().toLowerCase();
+        const limit = parseInt(U.$('newTeamLimit').value);
+        if(!name || !limit) return;
+        
+        // Check if name exists
+        const existing = await db.collection('teams').doc(name).get();
+        if(existing.exists){
+          alert('This team name is already taken. Choose another.');
+          return;
+        }
         
         try {
-          const filesSnap = await db.collection('files').where('isActive','==',true).orderBy('createdAt').get();
+          await db.collection('teams').doc(name).set({
+            name: name,
+            maxMembers: limit,
+            memberCount: 0,
+            createdBy: currentUser.id,
+            creatorName: currentUser.username,
+            isActive: true,
+            createdAt: new Date()
+          });
+          await db.collection('users').doc(currentUser.id).update({ createdTeamId: name });
+          currentUser.createdTeamId = name;
+          localStorage.setItem('stanytech_user', JSON.stringify(currentUser));
+          await Teams.loadAll();
+          Teams.renderMyTeam();
+        } catch(err){ alert('Error creating team: '+err.message); }
+      },
+      copyLink: () => {
+        const link = U.$('shareLink').value;
+        navigator.clipboard.writeText(link).then(()=>{
+          alert('✅ Link copied to clipboard!');
+        }).catch(()=>{
+          // Fallback
+          const ta = document.createElement('textarea');
+          ta.value = link;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          alert('✅ Link copied!');
+        });
+      },
+      shareWhatsApp: () => {
+        const link = U.$('shareLink').value;
+        const text = `🚀 Join my StanyTech Boost team! Add your number and get access to ${U.$('teamLimit').textContent}+ contacts.\n\n👉 ${link}`;
+        window.open('https://wa.me/?text='+encodeURIComponent(text), '_blank');
+      },
+      shareGeneric: () => {
+        const link = U.$('shareLink').value;
+        const teamName = U.$('teamName').textContent;
+        if(navigator.share){
+          navigator.share({ title: `Join ${teamName} Team`, text: `Join my StanyTech Boost team!`, url: link });
+        } else {
+          Teams.copyLink();
+        }
+      },
+      downloadVCF: async () => {
+        // Verify user has numbers
+        if(!currentUser.numbers || currentUser.numbers.length === 0){
+          alert('❌ You must add at least 1 number before downloading. Go to "My Numbers" section.');
+          return;
+        }
+        
+        // Verify team is full
+        const team = allTeams.find(t=>t.id===currentUser.createdTeamId);
+        if(!team || (team.memberCount||0) < (team.maxMembers||1000)){
+          alert('❌ Your team hasn\'t reached the target yet. Keep sharing!');
+          return;
+        }
+        
+        // Fetch ALL numbers from ALL members of this team
+        try {
+          const membersSnap = await db.collection('users').where('joinedTeam','==',team.id).get();
+          let allNumbers = [];
           
-          if(filesSnap.empty){
-            container.innerHTML = '<div class="text-center py-8 text-gray-400 text-xs">No contact files available yet. Check back later!</div>';
+          // Add creator's numbers if they have joined their own team
+          if(currentUser.numbers){
+            allNumbers = [...currentUser.numbers];
+          }
+          
+          // Add all members' numbers
+          membersSnap.forEach(doc=>{
+            const member = doc.data();
+            if(member.numbers && member.numbers.length > 0){
+              allNumbers = allNumbers.concat(member.numbers);
+            }
+          });
+          
+          // Remove duplicates
+          allNumbers = [...new Set(allNumbers)];
+          
+          if(allNumbers.length === 0){
+            alert('❌ No contacts available yet.');
             return;
           }
           
-          const files = filesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-          let html = '';
-          
-          files.forEach(f => {
-            const max = f.maxContacts || 1000;
-            const current = f.currentCount || 0;
-            const percent = Math.min(100, Math.round((current/max)*100));
-            const isFull = percent >= 100;
-            const isSelected = currentUser?.fileChoice === f.id;
-            
-            html += `
-              <div class="file-card ${isSelected?'selected':''} ${isFull?'full':''}" ${!isFull && !isSelected ? `onclick="User.selectFile('${f.id}')"` : ''}>
-                <div class="flex items-start justify-between mb-2">
-                  <div>
-                    <p class="font-semibold text-white text-sm">${f.name}</p>
-                    <p class="text-xs text-gray-400 mt-0.5">${current}/${max} contacts</p>
-                  </div>
-                  <span class="badge ${isFull?'badge-full':'badge-active'}">${isFull?'FULL':percent+'%'}</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
-                ${!isFull && !isSelected ? `<button class="w-full btn-outline py-1.5 rounded-lg text-xs mt-3 font-semibold">Select This File</button>` : ''}
-                ${isSelected ? `<p class="text-green-400 text-xs text-center mt-3 font-semibold"><i class="fas fa-check-circle mr-1"></i>✓ You joined this file</p>` : ''}
-                ${isFull ? `<p class="text-red-400 text-xs text-center mt-3">This file is full</p>` : ''}
-              </div>
-            `;
+          // Generate REAL VCF
+          let vcf = 'BEGIN:VCARD\nVERSION:3.0\nPRODID:-//StanyTech//Boost//EN\n';
+          allNumbers.forEach((num, idx) => {
+            const cleanName = `StanyTech ${team.name} #${idx+1}`;
+            vcf += `FN:${cleanName}\nTEL;TYPE=CELL,VOICE:${num}\nEND:VCARD\n`;
           });
           
-          container.innerHTML = html;
+          // Download
+          const blob = new Blob([vcf], { type: 'text/vcard;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `StanyTech_${team.name}_${allNumbers.length}_contacts.vcf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
           
         } catch(err){
-          console.error('Load files error:', err);
-          container.innerHTML = '<div class="text-center py-8 text-red-400 text-xs">Failed to load files. Please refresh.</div>';
+          alert('Error downloading: '+err.message);
         }
       },
-      
-      // ===== SELECT FILE =====
-      selectFile: async (fileId) => {
-        if(!currentUser || !fileId) return;
-        if(!U.ok(`Join file "${fileId}"? You can add your numbers after selecting.`)) return;
+      renderTeamsList: () => {
+        const list = U.$('teamsList');
+        U.$('teamCountBadge').textContent = allTeams.length + ' Teams';
+        
+        if(allTeams.length === 0){
+          list.innerHTML = '<div class="text-center py-8 text-gray-400 text-xs">No active teams yet. Create one or check back later!</div>';
+          return;
+        }
+        
+        let html = '';
+        allTeams.forEach(team => {
+          const pct = Math.min(100, Math.round(((team.memberCount||0)/(team.maxMembers||1000))*100));
+          const isFull = pct >= 100;
+          const isOwn = team.id === currentUser.createdTeamId;
+          const hasJoined = currentUser.joinedTeam === team.id;
+          
+          html += `
+            <div class="team-card ${isFull?'full':''} ${isOwn?'own':''} ${hasJoined?'selected':''}" ${!isFull && !hasJoined && !isOwn ? `onclick="Teams.openJoinModal('${team.id}')"` : ''}>
+              <div class="flex items-start justify-between mb-2">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <p class="font-bold text-white text-sm">${team.name}</p>
+                    ${isOwn ? '<span class="badge badge-owner">Yours</span>' : ''}
+                    ${hasJoined ? '<span class="badge badge-active">Joined</span>' : ''}
+                    ${isFull ? '<span class="badge badge-ready">Ready</span>' : ''}
+                  </div>
+                  <p class="text-xs text-gray-400">by ${team.creatorName||'Unknown'} • ${team.memberCount||0}/${team.maxMembers||1000} members</p>
+                </div>
+                <span class="badge ${isFull?'badge-full':'badge-active'}">${isFull?'FULL':pct+'%'}</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+              ${!isFull && !hasJoined && !isOwn ? '<button class="w-full btn-gradient text-white py-1.5 rounded-xl text-xs mt-3 font-semibold">Join This Team</button>' : ''}
+              ${hasJoined ? '<p class="text-green-400 text-xs text-center mt-2"><i class="fas fa-check-circle mr-1"></i>You\'re a member</p>' : ''}
+              ${isFull ? '<p class="text-cyan-400 text-xs text-center mt-2"><i class="fas fa-download mr-1"></i>Contacts ready for download</p>' : ''}
+            </div>
+          `;
+        });
+        
+        list.innerHTML = html;
+        
+        // Show joined team info
+        if(currentUser.joinedTeam){
+          const jt = allTeams.find(t=>t.id===currentUser.joinedTeam);
+          if(jt){
+            U.show('joinedTeamInfo');
+            U.$('joinedTeamName').textContent = 'Team: '+jt.name;
+          }
+        } else {
+          U.hide('joinedTeamInfo');
+        }
+      },
+      openJoinModal: (teamId) => {
+        selectedTeamId = teamId;
+        const team = allTeams.find(t=>t.id===teamId);
+        if(!team) return;
+        U.$('joinTeamName').textContent = team.name;
+        U.$('joinTeamStats').textContent = `${team.memberCount||0}/${team.maxMembers||1000} members • Created by ${team.creatorName||'Unknown'}`;
+        U.$('joinModal').classList.add('active');
+      },
+      closeJoinModal: () => { U.$('joinModal').classList.remove('active'); selectedTeamId = null; },
+      confirmJoin: async e => {
+        e.preventDefault();
+        const num1 = U.$('joinNumber1').value.trim();
+        const num2 = U.$('joinNumber2').value.trim();
+        const num3 = U.$('joinNumber3').value.trim();
+        
+        const numbers = [num1];
+        if(num2) numbers.push(num2);
+        if(num3) numbers.push(num3);
+        
+        if(!selectedTeamId || numbers.length === 0) return;
         
         try {
-          // Update user's file choice
-          await db.collection('users').doc(currentUser.id).update({ fileChoice: fileId });
-          currentUser.fileChoice = fileId;
-          localStorage.setItem('stanytech_user', JSON.stringify(currentUser));
-          
-          // Update file count (increment currentCount)
-          const fileRef = db.collection('files').doc(fileId);
-          const fileDoc = await fileRef.get();
-          if(fileDoc.exists){
-            const current = fileDoc.data().currentCount || 0;
-            await fileRef.update({ currentCount: current + 1 });
+          // Check if already joined
+          if(currentUser.joinedTeam){
+            alert('You\'re already in a team. Leave first to join another.');
+            Teams.closeJoinModal();
+            return;
           }
           
-          // Refresh UI
-          U.hide('fileSelection');
-          U.show('myNumbers');
-          await User.loadNumbers();
-          await User.updateFileProgress();
-          await User.loadFiles(); // Refresh file list to show selected state
+          const teamRef = db.collection('teams').doc(selectedTeamId);
+          const teamDoc = await teamRef.get();
+          
+          if(!teamDoc.exists){
+            alert('Team not found.');
+            Teams.closeJoinModal();
+            return;
+          }
+          
+          const teamData = teamDoc.data();
+          if((teamData.memberCount||0) >= (teamData.maxMembers||1000)){
+            alert('This team is full!');
+            Teams.closeJoinModal();
+            return;
+          }
+          
+          // Update user
+          await db.collection('users').doc(currentUser.id).update({
+            joinedTeam: selectedTeamId,
+            numbers: numbers
+          });
+          
+          // Update team count
+          await teamRef.update({
+            memberCount: (teamData.memberCount||0) + 1
+          });
+          
+          // Update local
+          currentUser.joinedTeam = selectedTeamId;
+          currentUser.numbers = numbers;
+          localStorage.setItem('stanytech_user', JSON.stringify(currentUser));
+          
+          Teams.closeJoinModal();
+          await Teams.loadAll();
+          Teams.renderTeamsList();
+          Teams.renderMyTeam();
+          Numbers.render();
+          
+          alert('✅ Successfully joined team!');
           
         } catch(err){
-          console.error('Select file error:', err);
-          alert('Error joining file. Please try again.');
+          alert('Error joining team: '+err.message);
         }
       },
-      
-      loadNumbers: async () => {
+      autoJoin: () => {
+        if(selectedTeamId){
+          Teams.openJoinModal(selectedTeamId);
+        }
+      }
+    };
+
+    // ===== NUMBERS =====
+    const Numbers = {
+      render: () => {
         const list = U.$('numbersList');
-        const numbers = currentUser.numbers || [];
+        const numbers = currentUser?.numbers || [];
+        U.$('numCountBadge').textContent = numbers.length + '/5';
+        
+        if(!currentUser?.joinedTeam && !currentUser?.createdTeamId){
+          list.innerHTML = '<div class="text-center py-6 text-gray-400 text-xs">Join or create a team first</div>';
+          U.hide('addNumberBtn');
+          return;
+        }
         
         if(numbers.length === 0){
-          list.innerHTML = '<div class="glass-card p-4 text-center"><p class="text-gray-400 text-xs">No numbers added yet</p><p class="text-gray-500 text-[10px] mt-1">Click "Add New Number" to get started</p></div>';
-          U.$('addNumberBtn').classList.remove('hidden');
+          list.innerHTML = '<div class="text-center py-4 text-gray-400 text-xs bg-gray-800/30 rounded-xl p-4">No numbers added yet</div>';
+          U.show('addNumberBtn');
           return;
         }
         
         let html = '';
         numbers.forEach((num, idx) => {
           html += `
-            <div class="glass-card p-3 flex items-center justify-between">
+            <div class="flex items-center justify-between bg-gray-800/40 rounded-xl px-4 py-3">
               <div class="flex items-center gap-2">
                 <i class="fab fa-whatsapp text-green-500"></i>
                 <span class="text-sm">${num}</span>
               </div>
-              <button onclick="User.deleteNumber(${idx})" class="text-red-400 hover:text-red-300 text-xs"><i class="fas fa-trash"></i></button>
+              <button onclick="Numbers.delete(${idx})" class="text-red-400 hover:text-red-300 text-xs">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
           `;
         });
         list.innerHTML = html;
         
-        // Hide add button if max reached
-        if(numbers.length >= 5){
-          U.$('addNumberBtn').classList.add('hidden');
+        if(numbers.length < 5){
+          U.show('addNumberBtn');
         } else {
-          U.$('addNumberBtn').classList.remove('hidden');
+          U.hide('addNumberBtn');
         }
       },
-      
-      addNumber: () => { 
-        if((currentUser.numbers||[]).length >= 5){ 
-          alert('Maximum 5 numbers allowed'); 
-          return; 
-        } 
-        U.show('addNumberModal'); 
+      openModal: () => {
+        if((currentUser?.numbers||[]).length >= 5){
+          alert('Maximum 5 numbers allowed');
+          return;
+        }
+        U.$('numberModal').classList.add('active');
       },
-      
-      saveNumber: async e => {
+      closeModal: () => U.$('numberModal').classList.remove('active'),
+      save: async e => {
         e.preventDefault();
         const number = U.$('newNumber').value.trim();
         if(!number) return;
         
         try {
-          const numbers = currentUser.numbers || []; 
+          const numbers = currentUser.numbers || [];
           numbers.push(number);
+          
           await db.collection('users').doc(currentUser.id).update({ numbers });
-          currentUser.numbers = numbers; 
+          currentUser.numbers = numbers;
           localStorage.setItem('stanytech_user', JSON.stringify(currentUser));
-          User.closeModal(); 
-          await User.loadNumbers();
-          U.$('statMyNumbers').textContent = numbers.length;
-          U.$('numberCount').textContent = numbers.length;
-        } catch(err){ 
-          alert('Error saving number'); 
-        }
+          
+          Numbers.closeModal();
+          Numbers.render();
+        } catch(err){ alert('Error: '+err.message); }
       },
-      
-      deleteNumber: async idx => {
+      delete: async idx => {
         if(!U.ok('Delete this number?')) return;
-        try { 
-          const numbers = currentUser.numbers || []; 
-          numbers.splice(idx, 1); 
-          await db.collection('users').doc(currentUser.id).update({ numbers }); 
-          currentUser.numbers = numbers; 
-          localStorage.setItem('stanytech_user', JSON.stringify(currentUser)); 
-          await User.loadNumbers();
-          U.$('statMyNumbers').textContent = numbers.length;
-          U.$('numberCount').textContent = numbers.length;
-        } catch(err){ 
-          alert('Error deleting number'); 
-        }
-      },
-      
-      closeModal: () => U.hide('addNumberModal'),
-      
-      downloadVCF: async () => {
-        if(!currentUser || !currentUser.numbers || currentUser.numbers.length === 0){ 
-          alert('No numbers to download. Add at least one number first.'); 
-          return; 
-        }
-        
-        let vcfContent = 'BEGIN:VCARD\nVERSION:3.0\n';
-        currentUser.numbers.forEach((num, idx) => { 
-          vcfContent += `FN:StanyTech Contact ${idx+1}\nTEL;TYPE=CELL:${num}\nEND:VCARD\n`; 
-        });
-        
-        const blob = new Blob([vcfContent], { type: 'text/vcard' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); 
-        a.href = url; 
-        a.download = `StanyTech_Contacts_${currentUser.username}.vcf`; 
-        a.click();
-        URL.revokeObjectURL(url);
-      },
-      
-      updateFileProgress: async () => {
-        if(!currentUser.fileChoice) return;
-        try { 
-          const file = await db.collection('files').doc(currentUser.fileChoice).get(); 
-          if(file.exists){ 
-            const f = file.data(); 
-            U.$('statFileProgress').textContent = `${f.currentCount||0}/${f.maxContacts||1000}`; 
-          } 
-        } catch(err){}
+        try {
+          const numbers = currentUser.numbers || [];
+          numbers.splice(idx, 1);
+          
+          await db.collection('users').doc(currentUser.id).update({ numbers });
+          currentUser.numbers = numbers;
+          localStorage.setItem('stanytech_user', JSON.stringify(currentUser));
+          Numbers.render();
+        } catch(err){ alert('Error: '+err.message); }
       }
     };
 
-    // Close modal on outside click
-    document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active');}));
-    
-    // Start app
-    document.addEventListener('DOMContentLoaded', App.init);
+    // ===== MODAL CLOSE ON OUTSIDE CLICK =====
+    document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => {
+      if(e.target === m) m.classList.remove('active');
+    }));
+
+    // ===== START =====
+    document.addEventListener('DOMContentLoaded', Auth.init);
   </script>
 </body>
 </html>
